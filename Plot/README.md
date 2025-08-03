@@ -10,7 +10,7 @@
   
   Y <- X1*f1(Z1) + X2*f2(Z1)
 
-# starting value 
+# Lambda value 
 
 lambda grid --> seq(0.1,200,length.out = 20)
 
