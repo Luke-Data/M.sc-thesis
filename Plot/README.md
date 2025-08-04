@@ -19,7 +19,7 @@ lambda grid --> seq(0.1,200,length.out = 20)
 
 # PLOT
 
-plotting some coefficient estimate function by diffrent lambda of variable X3.
+plotting some coefficient estimate function by diffrent lambda of variable X3. resulting plot is shrinkage of function f(X3)
 
 RED LINE --> unpenalized function estimate
 
