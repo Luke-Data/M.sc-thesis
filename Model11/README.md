@@ -6,7 +6,7 @@ E(Y|X=x,Z=z) = x1 * f(z) + ... + xd * f(z)
 
 where all coefficient function are function of same smoothing variable Z
 
-# Model 1.1
+# Model 
 
 NW --> VCM with costant local fit
 
