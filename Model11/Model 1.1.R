@@ -19,7 +19,7 @@ NW <- function(Z, data, h){
 
 # LLR vcm ----
 
-LLP <- function(Z, data, h) {
+LLR <- function(Z, data, h) {
   X <- as.matrix(data[, !names(data) %in% c("Y", "Z")])
   Y <- data$Y
   n <- nrow(X)
