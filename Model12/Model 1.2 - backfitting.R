@@ -7,8 +7,6 @@ kernel <- function(u, U, h) {
 }
 
 
-
-
 kernel_qjk_all <- function(Z, X, h) {
   
   d <- ncol(Z)   # numero variabili di smoothing
@@ -78,7 +76,6 @@ smooth_backfitting <- function(Y, X, Z, h, max_iter = 30, tol = 1e-6) {
   }
   
   q_jk <- kernel_qjk_all(Z,X,h=bande) # calcolo una volta soltanto
-  
   m_hat_attuale <- m_tilde
   
   for (r in 1: max_iter){
@@ -88,25 +85,19 @@ smooth_backfitting <- function(Y, X, Z, h, max_iter = 30, tol = 1e-6) {
     for(j in 1:d){
       
       res <- rep(0,n)
-      
+  
       for(k in 1:d){
         
         if(k == j) next
-        
+
         if (j > k){
-          
           res <- (q_jk[[j]][[k]] %*% m_hat_attuale[[k]]) / q_j[[j]] + res  # passo r
-          
         } else {
-          
           res <- (q_jk[[j]][[k]] %*% m_hat_precedente[[k]]) / q_j[[j]] + res  # passo r - 1
-          
         }
         
       }
-      
       m_hat_attuale[[j]] <- m_tilde[[j]] - res 
-      
     }
     
     if (max(sapply(1:d, function(j) max(abs(m_hat_attuale[[j]] - m_hat_precedente[[j]])))) < tol) {
