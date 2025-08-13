@@ -1,5 +1,3 @@
-# coefficient function estimate
-
 # DGP 
 
 library(huge)
@@ -12,6 +10,8 @@ df <- huge.generator(n, p, graph = 'random')
 
 colnames(df$data) <- c('X1','X2','X3','Z')
 data <- as.data.frame(df$data)
+
+# Coeff function
 
 f1 <- function(z) exp(z)-z^2
 f2 <- function(z) sin(0.5*pi*z)+4*z
