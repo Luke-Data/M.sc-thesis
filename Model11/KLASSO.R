@@ -27,7 +27,6 @@ X.data <- data[, c('X1','X2','X3')]
 
 b.tilde <- NW(data$Y,data$Z,X.data,h=.4)
 
-
 grid_lambda <- seq(0.01,1,length.out = 50)
 
 
