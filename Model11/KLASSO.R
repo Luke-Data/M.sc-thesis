@@ -21,11 +21,11 @@ Y <- X1*f1(Z1) + X2*f2(Z1)
 data <- cbind(Y,X1,X2,X3,Z1)
 data <- as.data.frame(data)
 
-data <- data[order(data$Z), ]
-
-X.data <- data[, c('X1','X2','X3')]
+# starting coefficient function
 
 b.tilde <- NW(data$Y,data$Z,X.data,h=.4)
+
+# creating a lambda penalty grid value
 
 grid_lambda <- seq(0.01,1,length.out = 50)
 
