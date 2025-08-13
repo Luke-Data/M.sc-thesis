@@ -1,4 +1,4 @@
-Comparison between estimate coefficient function using custom LLR with optimal bandwidth (using MSE criterion) vs ceooficent function obtained with mgcv package
+Comparison between estimate coefficient function using custom LLR with optimal bandwidth (using MSE criterion) vs coefficent function obtained with mgcv library
 
 # DGP 
 
