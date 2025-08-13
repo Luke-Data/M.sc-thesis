@@ -1,3 +1,5 @@
+Comparison between estimate coefficient function using custom LLR with optimal bandwidth (using MSE criterion) vs ceooficent function obtained with mgcv package
+
 # DGP 
 
 library(huge)
@@ -12,7 +14,7 @@ colnames(df$data) <- c('X1','X2','X3','Z')
 
 data <- as.data.frame(df$data)
 
-# Coeff function
+# True coeff function
 
 f1 <- function(z) exp(z)-z^2
 
