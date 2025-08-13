@@ -5,7 +5,9 @@ Comparison between estimate coefficient function using custom LLR with optimal b
 library(huge)
 
 n <- 500
+
 p <- 4
+
 set.seed(123456)
 
 df <- huge.generator(n, p, graph = 'random')
