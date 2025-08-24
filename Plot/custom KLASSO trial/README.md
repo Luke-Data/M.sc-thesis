@@ -43,6 +43,34 @@ f3 <- function(z) cos(pi*z)
 
 Y <- X.dat[,1]*f1(Z) + X.dat[,2]*f2(Z) + 3*rnorm(n)
 
+# DPG 3°
+
+n <- 200
+
+p <- 5
+
+set.seed(123)
+
+df <- huge.generator(n, p, graph = 'cluster', u = .1, vis = T, g=2)
+
+colnames(df$data) <- c('X1','X2','X3','X4','Z')
+
+data <- as.data.frame(df$data)
+
+Z <- data$Z
+
+f1 <- function(z) 2*sin(2*pi*z)
+
+f2 <- function(z) 4*z*(1-z)
+
+f3 <- function(z) cos(pi*z)
+
+f4 <- function(z) z^2
+
+Y <-  f1(Z)*data$X1 + f2(Z)*data$X2 + f3(Z)*data$X3 + rnorm(n,0,1)
+
+data <- cbind(Y,data)
+
 
 # PLOT
 
