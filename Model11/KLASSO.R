@@ -39,7 +39,7 @@ bw.opt <- bw$bw
 
 # starting coefficient function
 
-b.tilde <- NW(data$Y,data$Z,X.data,h=bw.opt)
+b.tilde <- NW(data$Z,data,h=bw.opt)
 
 # creating a lambda penalty grid value
 
