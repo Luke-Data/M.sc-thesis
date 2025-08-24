@@ -1,7 +1,7 @@
 # KLASSO
 
 # b.tilde --> initialized mtrix of NW coeff, you must run at least one NW 
-# penalty --> choosen for shrinkage; lenght(penalty) == no active var
+# penalty --> choosen for shrinkage; lenght(penalty) == number active var
 # Y --> response var
 # Z --> smooth var (single)
 # X.matrix --> active variable
