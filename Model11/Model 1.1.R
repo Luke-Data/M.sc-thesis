@@ -7,7 +7,7 @@ kernel <- function(u,U,h=.5) (1/(sqrt(2*pi)))*exp(-(0.5)*((u-U)/h)^2)/h
 NW <- function(Z, data, h){
   Z <- data$Z
   data <- as.data.frame(data[, !names(data) %in%  c("Z")])
-  coeff <- matrix(NA, ncol = ncol(data)-1, nrow = nrow(X))
+  coeff <- matrix(NA, ncol = ncol(data)-1, nrow = nrow(data))
   for (i in 1:nrow(data)){
     z0 <- Z[i]
     w <- kernel(Z,z0,h = h)
