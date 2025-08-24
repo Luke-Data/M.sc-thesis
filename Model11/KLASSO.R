@@ -128,10 +128,10 @@ for (i in 1:length(grid_lambda)){
 
 par(mfrow=c(1,2))
 
-plot(data$Z,b.tilde[,3], type = 'l', ylim = c(-.1,.1), xlim = c(-0.05,1))
+plot(data$Z,b.tilde[,3], ylim = c(-.1,.1), xlim = c(-0.05,1))
 abline(h=0)
 
-plot(data$Z,b.tilde.temp[,3], type = 'l', ylim = c(-.1,.1),xlim = c(-0.05,1))
+plot(data$Z,b.tilde.temp[,3], ylim = c(-.1,.1),xlim = c(-0.05,1))
 abline(h=0)
 
 
