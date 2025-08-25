@@ -2,11 +2,11 @@
 
 *Workflow:*
 
-  1) Estimate with local linear
+  1) Estimate starting coefficient function with local linear
   
-  2) Choose optimal bandwidth
+  2) Choose optimal bandwidth trought MSE minimization criterion
   
-  3) Select one singular coefficient function to improove
+  3) Select one singular coefficient function to improove estimate
   
   4) Compute another function estimate with new bandwidth trought two_step estimate
   
