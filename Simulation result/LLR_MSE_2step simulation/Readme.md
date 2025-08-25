@@ -1,5 +1,7 @@
 # AIM: two-step estimate of local linear model with optimized bandwidth
 
+*Workflow*
+
 1) Estimate with local linear
 
 2) Choose optimal bandwidth
