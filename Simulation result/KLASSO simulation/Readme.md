@@ -1,4 +1,4 @@
-# trying 3 diffrent DGP
+# KLASSO under 3 diffrent DGP
 
 *Result:*
 
