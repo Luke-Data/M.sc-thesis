@@ -6,7 +6,7 @@
 
   2) Estimate initial coefficient function with local linear 
   
-  3) Select one singular coefficient function to improove estimate
+  3) Select one singular coefficient function to estimate again with diffrent bandwidth
   
   4) Compute another function estimate with new bandwidth through two_step estimate
   
