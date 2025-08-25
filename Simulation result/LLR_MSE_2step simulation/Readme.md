@@ -8,6 +8,6 @@
   
   3) Select one singular coefficient function to estimate again with diffrent bandwidth
   
-  4) Compute another function estimate with new bandwidth through two_step estimate
+  4) Compute new coefficient through two-step estimate function
   
-  (New bandwidth calculate with MSE bandwidth optimization)
+  (two-step optimal bandwidth is obtained through MSE criterion)
