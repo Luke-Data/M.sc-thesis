@@ -2,9 +2,9 @@
 
 *Workflow:*
 
-  1) Estimate initial coefficient function with local linear 
-  
-  2) Choose optimal bandwidth through MSE minimization criterion
+  1) Choose optimal bandwidth through MSE minimization criterion
+
+  2) Estimate initial coefficient function with local linear 
   
   3) Select one singular coefficient function to improove estimate
   
