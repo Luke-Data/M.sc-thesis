@@ -1,6 +1,7 @@
 # DPG 1°
 
   set.seed(1234)
+  
   n = 300
   
   X1 <- rnorm(n,mean = 2, sd = 1.5)
@@ -20,6 +21,7 @@ lambda grid --> seq(0.1,200,length.out = 20)
 # DPG 2°
 
 set.seed(123)
+
 n = 300
 
 mu <- c(0,0)
