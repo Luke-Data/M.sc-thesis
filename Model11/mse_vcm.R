@@ -13,7 +13,9 @@ p.Z <- function(z,Z,banda){
 # matrice valori attesi E(X_ j X_ k | Z = z0)
 N.e <- function(var.l,pesi){
   
-  N <- matrix(data=NA,nrow = 3,ncol = 3)
+  p <- ncol(var.l)
+  
+  N <- matrix(data=NA,nrow = p,ncol = p)
   den <- sum(pesi)
   
   for (i in 1:ncol(var.l)){
@@ -66,7 +68,7 @@ MSE.LLR <- function(h, data, Z) {
   for (i in seq_along(h)) {
     
     LLR.temp <- LLR(Z, data, h[i])
-    bias.temp <- LLR.temp[, (ncol(LLR.temp) - p + 1):ncol(LLR.temp)] * (h[i]^2 / 2)
+    bias.temp <- LLR.temp[, (ncol(LLR.temp) - p + 1):ncol(LLR.temp), drop = FALSE] * (h[i]^2 / 2)
     MSE.temp <- numeric(n)
     
     for (j in 1:n) {
