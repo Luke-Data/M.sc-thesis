@@ -43,30 +43,25 @@ Monte Carlo study evaluating wsbackfit performance under different conditions.
 ```
 Model12_SB_simulations/
 ├── README.md                              (this file)
+├── Simulation _script/
+│   └── SB_simulation.R                    (main simulation script)
 ├── uniform_Z/
-│   ├── SB_simulation_uniform.R            (main simulation script)
 │   ├── n500/
-│   │   ├── outputs/
-│   │   │   ├── Pointwise MSE n=500.png
-│   │   │   ├── Pointwise bias n =500.png
-│   │   │   └── results.json
+│   │   ├── Pointwise MSE n=500.png
+│   │   ├── Pointwise bias n =500.png
 │   │   └── results.json
 │   └── n1000/
-│       ├── outputs/
-│       └── results.json
+│       └── (outputs to be generated)
 └── normal_Z/
-    ├── SB_simulation_normal.R             (to be created)
     ├── n500/
-    │   ├── outputs/
-    │   └── results.json
+    │   └── (outputs to be generated)
     └── n1000/
-        ├── outputs/
-        └── results.json
+        └── (outputs to be generated)
 ```
 
 ## Output Files
 
-Each scenario produces the following outputs in `nXXX/outputs/`:
+Each scenario produces the following outputs directly in `nXXX/` folders:
 
 - **`Pointwise MSE n=XXX.png`** - Pointwise MSE curves for all 4 functions (2×2 panel plot)
 - **`Pointwise bias n =XXX.png`** - Pointwise squared bias curves for all 4 functions (2×2 panel plot)
@@ -87,12 +82,15 @@ Each scenario produces the following outputs in `nXXX/outputs/`:
 
 ### Running a simulation
 
-1. Open the appropriate script (e.g., `uniform_Z/SB_simulation_uniform.R`)
+1. Open the simulation script: `Simulation _script/SB_simulation.R`
 2. Set working directory with `setwd()` to the desired output folder:
-   - For n=500: `setwd('.../uniform_Z/n500/outputs')`
-   - For n=1000: `setwd('.../uniform_Z/n1000/outputs')`
-3. Set desired sample size: `n <- 500` or `n <- 1000`
-4. Run the script - outputs will be saved in the working directory
+   - For uniform Z, n=500: `setwd('.../uniform_Z/n500')`
+   - For uniform Z, n=1000: `setwd('.../uniform_Z/n1000')`
+   - For normal Z, n=500: `setwd('.../normal_Z/n500')`
+   - For normal Z, n=1000: `setwd('.../normal_Z/n1000')`
+3. Set sample size: `n <- 500` or `n <- 1000`
+4. Set Z distribution: Modify Z₁ and Z₂ generation in the script (Uniform or Normal)
+5. Run the script - outputs will be saved in the working directory
 
 ### Script structure
 
