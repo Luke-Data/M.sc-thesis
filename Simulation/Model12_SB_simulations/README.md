@@ -85,8 +85,6 @@ Each scenario produces the following outputs in `nXXX/outputs/`:
 - **IMSE (Integrated Mean Squared Error)**: Integrated pointwise MSE
   - Formula: `(max(x_grid) - min(x_grid)) × mean(pointwise_MSE)`
 
-## Usage
-
 ### Running a simulation
 
 1. Open the appropriate script (e.g., `uniform_Z/SB_simulation_uniform.R`)
@@ -99,12 +97,9 @@ Each scenario produces the following outputs in `nXXX/outputs/`:
 ### Script structure
 
 The simulation script:
-- Uses `setwd()` to determine output location
 - Runs parallel Monte Carlo with `nsim = 100` replications using all available cores
 - Estimates coefficient functions using wsbackfit with automatic bandwidth selection
 - Computes IBS and IMSE metrics for each of the 4 functions
-- Generates two 2×2 panel plots (MSE and Bias)
-- Saves numerical results in `results.json`
 
 ### JSON output format
 
