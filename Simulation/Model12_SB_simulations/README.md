@@ -80,10 +80,10 @@ Each scenario produces the following outputs in `nXXX/outputs/`:
 ## Metrics
 
 - **IBS (Integrated Squared Bias)**: Mean of squared bias across evaluation grid
-  - Formula: `mean((mean(f.hat) - f.true)²)`
+  - Integra approximation formula: `mean((mean(f.hat) - f.true)²)`
 
 - **IMSE (Integrated Mean Squared Error)**: Integrated pointwise MSE
-  - Formula: `(max(x_grid) - min(x_grid)) × mean(pointwise_MSE)`
+  - INtegral approximation formula: `(max(x_grid) - min(x_grid)) × mean(pointwise_MSE)`
 
 ### Running a simulation
 
