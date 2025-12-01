@@ -8,7 +8,7 @@ Monte Carlo study evaluating wsbackfit performance under different conditions.
 
 - **Model**: Y = X₁f₁(Z₁) + X₂f₂(Z₁) + X₃[f₃(Z₂) + f₄(Z₁)] + ε, where ε ~ N(0,1)
 - **Predictors**:
-  - X₁ ~ N(2, 9)
+  - X₁ ~ N(2, 3)
   - X₂ ~ Exp(3)
   - X₃ ~ Gamma(1, 1)
 - **True coefficient functions**:
@@ -80,12 +80,10 @@ Each scenario produces the following outputs in `nXXX/outputs/`:
 ## Metrics
 
 - **IBS (Integrated Squared Bias)**: Mean of squared bias across evaluation grid
-  - Formula: `mean((mean(f.hat) - f.true)²)`
+  - Integra approximation formula: `mean((mean(f.hat) - f.true)²)`
 
 - **IMSE (Integrated Mean Squared Error)**: Integrated pointwise MSE
-  - Formula: `(max(x_grid) - min(x_grid)) × mean(pointwise_MSE)`
-
-## Usage
+  - INtegral approximation formula: `(max(x_grid) - min(x_grid)) × mean(pointwise_MSE)`
 
 ### Running a simulation
 
@@ -99,12 +97,9 @@ Each scenario produces the following outputs in `nXXX/outputs/`:
 ### Script structure
 
 The simulation script:
-- Uses `setwd()` to determine output location
 - Runs parallel Monte Carlo with `nsim = 100` replications using all available cores
 - Estimates coefficient functions using wsbackfit with automatic bandwidth selection
 - Computes IBS and IMSE metrics for each of the 4 functions
-- Generates two 2×2 panel plots (MSE and Bias)
-- Saves numerical results in `results.json`
 
 ### JSON output format
 
@@ -131,12 +126,10 @@ The simulation script:
 }
 ```
 
-## Expected Research Questions
+## Idea
 
-1. **Sample size effect**: Does IMSE decrease as n increases (500 → 1000)?
-2. **Distribution effect**: How do Uniform vs Normal Z affect estimation performance?
-3. **Function-specific patterns**: Do smoother functions (e.g., f₁, f₃) show lower bias than less smooth ones (e.g., f₄)?
-4. **Interaction effects**: Does the sample size effect differ between Uniform and Normal distributions?
+1. **Distribution effect**: How have Uniform vs Normal Z affect estimation performance
+2. **Interaction effects**: Does the sample size effect differ between Uniform and Normal distributions
 
 ## Date Created
 
