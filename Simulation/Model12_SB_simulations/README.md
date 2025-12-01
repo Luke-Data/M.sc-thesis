@@ -8,7 +8,7 @@ Monte Carlo study evaluating wsbackfit performance under different conditions.
 
 - **Model**: Y = X₁f₁(Z₁) + X₂f₂(Z₁) + X₃[f₃(Z₂) + f₄(Z₁)] + ε, where ε ~ N(0,1)
 - **Predictors**:
-  - X₁ ~ N(2, 9)
+  - X₁ ~ N(2, 3)
   - X₂ ~ Exp(3)
   - X₃ ~ Gamma(1, 1)
 - **True coefficient functions**:
