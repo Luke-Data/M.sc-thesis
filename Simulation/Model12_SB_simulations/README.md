@@ -126,12 +126,10 @@ The simulation script:
 }
 ```
 
-## Expected Research Questions
+## Idea
 
-1. **Sample size effect**: Does IMSE decrease as n increases (500 → 1000)?
-2. **Distribution effect**: How do Uniform vs Normal Z affect estimation performance?
-3. **Function-specific patterns**: Do smoother functions (e.g., f₁, f₃) show lower bias than less smooth ones (e.g., f₄)?
-4. **Interaction effects**: Does the sample size effect differ between Uniform and Normal distributions?
+1. **Distribution effect**: How have Uniform vs Normal Z affect estimation performance
+2. **Interaction effects**: Does the sample size effect differ between Uniform and Normal distributions
 
 ## Date Created
 
