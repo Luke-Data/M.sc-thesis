@@ -1,6 +1,9 @@
 library(wsbackfit)
 library(foreach)
 library(doParallel)
+library(ggplot2)
+library(gridExtra)
+library(grid)
 
 setwd('C:\\Users\\gargh\\Documents\\Tesi\\Code\\Simulation\\Model12_SB_simulations\\uniform_Z\\n500\\outputs')
 
@@ -137,11 +140,6 @@ imse.31 <- (max(x_grid) - min(x_grid)) * mean(apply(f.se[[4]],1,mean))
 imse <- c(imse.11,imse.12,imse.32,imse.31)
 
 
-
-library(ggplot2)
-library(gridExtra)
-library(grid)
-
 # MSE plot ----
 
 plot_data <- data.frame()
@@ -247,6 +245,40 @@ combined_plot <- grid.arrange(
   top = textGrob("Pointwise Bias",
                  gp = gpar(fontface = "bold", fontsize = 14))
 )
+
+
+# function plot ----
+
+par(mfrow=c(2,2), mar = c(4.5, 4.5, 2, 1), oma = c(0, 0, 3, 0))
+
+plot(x_grid,f1(x_grid),type='l',lwd=2, xlab=expression(Z[1]),       
+     ylab=expression(f[1](Z[1])))
+lines(x_grid,apply(f.hat$f11,1,mean),lty='dotted', col='indianred2',lwd=1.5)
+plot(x_grid,f2(x_grid),type='l',lwd=2, xlab=expression(Z[2]),
+     ylab=expression(f[2](Z[2])))
+lines(x_grid,apply(f.hat$f12,1,mean),lty='dotted', col='indianred2',lwd=1.5)
+plot(x_grid,f3(x_grid),type='l',lwd=2,
+     xlab=expression(Z[2]), ylab=expression(f[3](Z[2])))
+lines(x_grid,apply(f.hat$f32,1,mean),lty='dotted', col='indianred2',lwd=1.5)
+plot(x_grid,f4(x_grid),type='l',lwd=2,
+     xlab=expression(Z[1]), ylab=expression(f[4](Z[1])), ylim = c(-1.19,3))
+lines(x_grid,apply(f.hat$f31,1,mean),lty='dotted', col='indianred2',lwd=1.5)
+
+par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(0, 0, 0, 0), new = TRUE)
+plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n")
+
+legend("top", 
+       legend = c("True function", "Estimate"), 
+       col = c("black", "indianred2"), 
+       lty = c("solid", "dotted"), 
+       lwd = c(2, 1.5),
+       horiz = TRUE,       
+       bty = "n",          
+       inset = c(0, 0.02), 
+       cex = 1)
+
+par(mfrow=c(1,1))
+
 
 # Save results to JSON ----
 
