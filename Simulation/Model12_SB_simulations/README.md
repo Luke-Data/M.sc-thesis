@@ -164,41 +164,7 @@ Each folder contains:
   - Integral approximation formula: `6 × mean(pointwise_MSE)`
   - Factor 6 represents the range width: max(x_grid) - min(x_grid) = 3 - (-3) = 6
 
-## Running Simulations
-
-### Independence Structure (SB_simulation.R)
-
-1. Open [SB_simulation.R](Simulation _script/SB_simulation.R)
-2. Set working directory to the desired output folder:
-   - For uniform Z, n=500: `setwd('.../Indipendence_structure/uniform_Z/n500')`
-   - For uniform Z, n=1000: `setwd('.../Indipendence_structure/uniform_Z/n1000')`
-   - For normal Z, n=500: `setwd('.../Indipendence_structure/normal_Z/n500')`
-   - For normal Z, n=1000: `setwd('.../Indipendence_structure/normal_Z/n1000')`
-3. Set sample size: `n <- 500` or `n <- 1000`
-4. Modify Z₁, Z₂ generation:
-   - Uniform: `data$X9`, `data$X3` (from graphical model)
-   - Normal: Same structure but different seed/parameters
-5. Run the script - outputs will be saved in the working directory
-
-### Dependence Structure (SB_simulation_interact.R)
-
-1. Open [SB_simulation_interact.R](Simulation _script/SB_simulation_interact.R)
-2. Set working directory:
-   - For n=500: `setwd('.../Dependece_structure/n500')`
-   - For n=1000: `setwd('.../Dependece_structure/n1000')`
-3. Set sample size: `n <- 500` or `n <- 1000`
-4. Run the script - all predictors and smoothing variables come from the graphical model
-
-### Graph Structure (SB_Graph_simulation.R)
-
-1. Open [SB_Graph_simulation.R](Simulation _script/SB_Graph_simulation.R)
-2. Set working directory:
-   - For n=500: `setwd('.../Graph_structure/n500')`
-   - For 500d: `setwd('.../Graph_structure/500d')`
-3. Set sample size: `n <- 500`
-4. Run the script
-
-### Common Script Features
+## Common Script Features
 
 All simulation scripts:
 - Run parallel Monte Carlo with `nsim = 100` replications using all available cores (`doParallel`)
@@ -246,16 +212,6 @@ All simulation scripts:
   "f3_X7": { "ibs": ..., "imse": ... }
 }
 ```
-
-## Research Questions
-
-1. **Independence Structure**: How do Uniform vs Normal Z distributions affect estimation performance for varying-coefficient models with independent smoothing variables?
-
-2. **Dependence Structure**: How does estimation performance change when both coefficient variables and smoothing variables share dependency structure (from graphical model)?
-
-3. **Graph Structure**: What is the impact of specific graphical model configurations on backfitting estimation accuracy?
-
-4. **Sample Size Effect**: Does the effect of sample size (n=500 vs n=1000) differ across the three dependence structures?
 
 ## Date Created
 
