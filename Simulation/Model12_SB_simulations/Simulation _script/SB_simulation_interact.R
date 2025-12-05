@@ -51,7 +51,7 @@ f.hat <- list(
   f38 = matrix(nrow = n, ncol = nsim),
   f4 = matrix(nrow = n, ncol = nsim),
   f5 = matrix(nrow = n, ncol = nsim),
-  f36 = matrix(nrow = n, ncol = nsim)
+  f37 = matrix(nrow = n, ncol = nsim)
 )
 
 f.se <- list(
@@ -60,7 +60,7 @@ f.se <- list(
   f38 = matrix(nrow = n, ncol = nsim),
   f4 = matrix(nrow = n, ncol = nsim),
   f5 = matrix(nrow = n, ncol = nsim),
-  f36 = matrix(nrow = n, ncol = nsim)
+  f37 = matrix(nrow = n, ncol = nsim)
 )
 
 newdata <- data.frame(
@@ -71,7 +71,8 @@ newdata <- data.frame(
   X5 = rep(1,n),
   X2 = x_grid,      
   X3 = x_grid,
-  X8 = x_grid
+  X8 = x_grid,
+  X7 = x_grid
 )
 
 f1.true <- f1(x_grid) - mean(f1(x_grid))
@@ -92,12 +93,12 @@ sim.results <- foreach(i = 1:nsim, .packages = c("wsbackfit", "mvtnorm"),
     data <- data.frame(rmvnorm(n,mean = rep(0,p), sigma = dpg_sigma))
     
     Y <- data$X1 * f1(data$X2) + data$X6 * f2(data$X3) + data$X10 * f3(data$X8) +
-      data$X5 * f4(data$X3) + f5(data$X2) + f3(data$X6) + rnorm(n)
+      data$X5 * f4(data$X3) + f5(data$X2) + f3(data$X7) + rnorm(n)
     
     data <- data.frame(cbind(Y,data))
     
     m0 <- sback(Y ~ sb(X2,by=X1,h=-1) + sb(X3,by=X6,h=-1) + sb(X8,by=X10,h=-1) + sb(X3,by=X5,h=-1) +
-                  sb(X2,h=-1) + sb(X6,h=-1), data=data)
+                  sb(X2,h=-1) + sb(X7,h=-1), data=data)
     
     pred <- predict(m0, newdata = newdata)
     
@@ -131,11 +132,11 @@ sim.results <- foreach(i = 1:nsim, .packages = c("wsbackfit", "mvtnorm"),
     val.hat5 <- f.hat5 - mean(f.hat5)
     val.se5  <- (val.hat5 - f5.true)^2
     
-    lin_X6 <- if("X6" %in% names(pred$coeff)) pred$coeff[["X6"]] else 0
-    cols_X6 <- grep("sb\\(X6", colnames(pred$peffects))
-    sm_X6 <- pred$peffects[, cols_X6[!grepl("by", colnames(pred$peffects)[cols_X6])]]
+    lin_X7 <- if("X7" %in% names(pred$coeff)) pred$coeff[["X7"]] else 0
+    cols_X7 <- grep("sb\\(X7", colnames(pred$peffects))
+    sm_X7 <- pred$peffects[, cols_X7[!grepl("by", colnames(pred$peffects)[cols_X7])]]
     
-    f.hat6 <- (lin_X6 * x_grid + sm_X6)
+    f.hat6 <- (lin_X6 * x_grid + sm_X7)
     val.hat6 <- f.hat6 - mean(f.hat6)
     val.se6  <- (val.hat6 - f3.true)^2
     
@@ -195,9 +196,9 @@ imse <- c(imse.1,imse.2,imse.3,imse.4,imse.5,imse.6)
 # Integrated MSE plot ----
 
 labels_list <- c("X[1]*f[1](X[2])", "X[6]*f[2](X[3])", "X[10]*f[3](X[8])", 
-                 "X[5]*f[4](X[3])", "f[5](X[2])", "f[3](X[6])")
+                 "X[5]*f[4](X[3])", "f[5](X[2])", "f[3](X[7])")
 y_labels <- c("MSE~(f[list(1,2)])", "MSE~(f[list(6,3)])", "MSE~(f[list(10,8)])", 
-              "MSE~(f[list(5,3)])", "MSE~(f[list(5,2)])", "MSE~(f[list(3,6)])")
+              "MSE~(f[list(5,3)])", "MSE~(f[list(5,2)])", "MSE~(f[list(3,7)])")
 plot_data <- data.frame()
 for (j in 1:6) {
   temp_df <- data.frame(
@@ -237,9 +238,10 @@ grid.arrange(
 # Bias ----
 
 labels_list <- c("X[1]*f[1](X[2])", "X[6]*f[2](X[3])", "X[10]*f[3](X[8])", 
-                 "X[5]*f[4](X[3])", "f[5](X[2])", "f[3](X[6])")
+                 "X[5]*f[4](X[3])", "f[5](X[2])", "f[3](X[7])")
+
 y_labels <- c("Bias~(f[list(1,2)])", "Bias~(f[list(6,3)])", "Bias~(f[list(10,8)])", 
-              "Bias~(f[list(5,3)])", "Bias~(f[list(5,2)])", "Bias~(f[list(3,6)])")
+              "Bias~(f[list(5,3)])", "Bias~(f[list(5,2)])", "Bias~(f[list(3,7)])")
 
 f_true_list <- list(f1.true, f2.true, f3.true, f4.true, f5.true, f3.true)
 
@@ -301,8 +303,8 @@ lines(x_grid, apply(f.hat[[4]], 1, mean), lty='dotted', col='indianred2', lwd=1.
 plot(x_grid, f5(x_grid), type='l', lwd=2, xlab=expression(X[2]), ylab=expression(f[5](X[2])))
 lines(x_grid, apply(f.hat[[5]], 1, mean), lty='dotted', col='indianred2', lwd=1.5)
 
-plot(x_grid, f3(x_grid), type='l', lwd=2, xlab=expression(X[6]), ylab=expression(f[3](X[6])))
-lines(x_grid, apply(f.hat[[6]], 1, mean), lty='dotted', col='indianred2', lwd=1.5)
+plot(x_grid, f3(x_grid), type='l', lwd=2, xlab=expression(X[7]), ylab=expression(f[3](X[6])))
+lines(x_grid, apply(f.hat[[7]], 1, mean), lty='dotted', col='indianred2', lwd=1.5)
 
 par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(0, 0, 0, 0), new = TRUE)
 plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n")
@@ -324,7 +326,7 @@ results_json <- list(
   f3_X10X8 = list(ibs = unname(ibs[3]), imse = unname(imse[3])),
   f4_X5X3 = list(ibs = unname(ibs[4]), imse = unname(imse[4])),
   f5_X2 = list(ibs = unname(ibs[5]), imse = unname(imse[5])),
-  f3_X6 = list(ibs = unname(ibs[6]), imse = unname(imse[6]))
+  f3_X7 = list(ibs = unname(ibs[6]), imse = unname(imse[6]))
 )
 write_json(results_json, "results.json", pretty = TRUE, auto_unbox = TRUE)
 
