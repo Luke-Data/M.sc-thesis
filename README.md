@@ -1,4 +1,4 @@
-# M.sc Thesis - Varying Coefficient Models
+Varying Coefficient Models
 
 This repository contains the implementation and simulations for varying coefficient models research.
 
