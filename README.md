@@ -64,13 +64,22 @@ M.sc-thesis/
     └── Model12_SB_simulations/                  (Model 1.2 - Smooth Backfitting simulations)
         ├── README.md
         ├── Simulation _script/
-        │   └── SB_simulation.R
-        ├── uniform_Z/
+        │   ├── SB_simulation.R                  (Independence structure)
+        │   ├── SB_simulation_interact.R         (Dependence structure)
+        │   └── SB_Graph_simulation.R            (Graph structure)
+        ├── Indipendence_structure/
+        │   ├── uniform_Z/
+        │   │   ├── n500/
+        │   │   └── n1000/
+        │   └── normal_Z/
+        │       ├── n500/
+        │       └── n1000/
+        ├── Dependece_structure/
         │   ├── n500/
         │   └── n1000/
-        └── normal_Z/
+        └── Graph_structure/
             ├── n500/
-            └── n1000/
+            └── 500d/
 ```
 
 ## Key Difference Between Models
