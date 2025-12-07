@@ -61,7 +61,7 @@ for (i in 1:nsim){
 }
 
 #p-value
-print(sum(mse.b <= mse.l)/length(mse.b)) # reject H0
+print(sum(mse.b < mse.l)/length(mse.b)) # reject H0
 
 plot(x_grid, x, type='l', ylim=c(-1, 1), 
      main="", ylab="f2(z2)")
@@ -102,4 +102,4 @@ for (i in 1:nsim){
 }
 
 #p-value
-print(sum(mse.b <= mse.l)/length(mse.b)) # reject H0
+print(sum(mse.b < mse.l)/length(mse.b)) # reject H0
