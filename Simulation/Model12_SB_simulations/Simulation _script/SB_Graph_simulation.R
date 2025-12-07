@@ -7,7 +7,6 @@ library(wsbackfit)
 library(mvtnorm)
 library(ggplot2)
 library(gridExtra)
-library(grid)
 library(patchwork)
 
 setwd('C:\\Users\\gargh\\Documents\\Tesi\\Code\\Simulation\\Model12_SB_simulations\\Mixed\\n500')
@@ -75,6 +74,8 @@ f2.true <- f2(x_grid) - mean(f2(x_grid))
 f3.true <- f3(x_grid) - mean(f3(x_grid))
 f4.true <- f4(x_grid) - mean(f4(x_grid))
 
+# option.RNG = 123, il seme in parallelo si perde 
+# una iterazione per vedere se la parallelizzazione funziona
 
 sim.results <- foreach(i = 1:nsim, .packages = c("wsbackfit", "mvtnorm"), 
            .export = c("f1", "f2", "f3", "f4", "n", "x_grid", "newdata", "dpg_sigma","p",
@@ -90,6 +91,7 @@ sim.results <- foreach(i = 1:nsim, .packages = c("wsbackfit", "mvtnorm"),
      data$X5 * f4(data$X3) + rnorm(n)
    
    data <- data.frame(cbind(Y,data))
+   
    
    m0 <- sback(Y ~ sb(X9,by=X1,h=-1) + sb(X3,by=X6,h=-1) + sb(X9,by=X8,h=-1) + sb(X3,by=X5,h=-1), data=data)
    
@@ -782,6 +784,7 @@ results_json <- list(
 write_json(results_json, "results.json", pretty = TRUE, auto_unbox = TRUE)
 
 
-
+# aggiungere variabili che non ci sono. Aggiungo una variabile che sta nel grafo ma non nel modello vero
+# Permutation test 
 
 
