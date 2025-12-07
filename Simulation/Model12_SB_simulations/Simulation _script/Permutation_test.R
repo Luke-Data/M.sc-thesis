@@ -44,8 +44,6 @@ plot(x_grid,f2.hat,type='l',ylim=c(-2.5,2.5))
 lines(x_grid,f2(x_grid),col='red')
 par(mfrow=c(1,1))
 
-# H0: f2(z2) = 0 (fluttuazioni attorno allo zero) 
-
 f2.sim = matrix(nrow=n, ncol=nsim)
 
 mse.b <- rep(NA,nsim)
