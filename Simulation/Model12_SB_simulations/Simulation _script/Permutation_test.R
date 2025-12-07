@@ -8,6 +8,8 @@ perm <- function(x){
   return (x_new)
 }
 
+# H0: f(z2) = identicamente nulla per ogni z2 nel supporto di Z2
+
 set.seed(666)
 
 n <- 500
@@ -67,7 +69,7 @@ plot(x_grid, x, type='l', ylim=c(-1, 1),
      main="", ylab="f2(z2)")
 abline(h=0, lwd=2, lty=2)
 
-# smooth backfitting permutation test ----
+# smooth backfitting permutation test 
 # H0: f(z2) = costante, non varia
 
 set.seed(666)
