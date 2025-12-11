@@ -8,6 +8,8 @@ perm <- function(x){
   return (x_new)
 }
 
+# H0: f(z2) = identicamente nulla per ogni z2 nel supporto di Z2
+
 set.seed(666)
 
 n <- 500
@@ -44,8 +46,6 @@ plot(x_grid,f2.hat,type='l',ylim=c(-2.5,2.5))
 lines(x_grid,f2(x_grid),col='red')
 par(mfrow=c(1,1))
 
-# H0: f2(z2) = 0 (fluttuazioni attorno allo zero) 
-
 f2.sim = matrix(nrow=n, ncol=nsim)
 
 mse.b <- rep(NA,nsim)
@@ -63,13 +63,13 @@ for (i in 1:nsim){
 }
 
 #p-value
-print(sum(mse.b <= mse.l)/length(mse.b)) # reject H0
+print(sum(mse.b < mse.l)/length(mse.b)) # reject H0
 
 plot(x_grid, apply(f2.sim,1,mean), type='l', ylim=c(-1, 1), 
      main="", ylab="f2(z2)")
 abline(h=0, lwd=2, lty=2)
 
-# smooth backfitting permutation test ----
+# smooth backfitting permutation test 
 # H0: f(z2) = costante, non varia
 
 set.seed(666)
@@ -104,4 +104,4 @@ for (i in 1:nsim){
 }
 
 #p-value
-print(sum(mse.b <= mse.l)/length(mse.b)) # reject H0
+print(sum(mse.b < mse.l)/length(mse.b)) # reject H0
