@@ -2,7 +2,7 @@
 
 ## Overview
 
-Studio di simulazione Monte Carlo per confrontare due metodi di stima per modelli a coefficienti variabili sotto diverse strutture di dipendenza generate da Gaussian Graphical Models (GGM).
+Studio di simulazione Monte Carlo per confrontare due metodi di stima per modelli a coefficienti variabili sotto diverse strutture di dipendenza 
 
 ### Metodi Comparati
 
