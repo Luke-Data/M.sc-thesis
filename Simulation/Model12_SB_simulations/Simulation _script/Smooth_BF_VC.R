@@ -17,7 +17,12 @@ p <- 9
 
 set.seed(12)
 
+<<<<<<< HEAD
 # Gaussian Graphical model ----
+=======
+# Gaussian Graphichal model; Graph = "random") ----
+
+>>>>>>> ad1967eda3b9bca63243ba5971ee7043b9240169
 Gr <- huge.generator(n, p, graph="random", prob=0.4)
 Adj.true <- as.matrix(Gr$theta)
 dati <- as.data.frame(Gr$data)
