@@ -18,7 +18,7 @@ set.seed(12)
 
 # Gaussian Graphichal model; Graph = "random") ----
 
-Gr <- huge.generator(n, p, graph="random", prob=0.23)
+Gr <- huge.generator(n, p, graph="random", prob=0.4)
 Adj.true <- as.matrix(Gr$theta)
 dati <- as.data.frame(Gr$data)
 qgraph::qgraph(Adj.true, type="UG", edge.color="#7A6F8E", color="#EDE8F2")
