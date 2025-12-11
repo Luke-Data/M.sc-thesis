@@ -21,7 +21,7 @@ Studio di simulazione Monte Carlo per confrontare due metodi di stima per modell
 
 ### 1. Struttura di Indipendenza
 
-**Obiettivo**: Valutare le performance quando le variabili coefficiente (Xᵢ) sono generate dal GGM, ma le variabili di smoothing sono indipendenti tra le funzioni.
+**Obiettivo**: Valutare le performance quando le variabili di smoothing (Zᵢ) hanno una dipendenza con le altre variabili del modello rispetto a quando sono indipendenti.
 
 **Script**:
 - Smoothed Backfitting: [Smooth_BF_VC.R](Simulation _script/Smooth_BF_VC.R)
@@ -29,18 +29,18 @@ Studio di simulazione Monte Carlo per confrontare due metodi di stima per modell
 
 **Modello**:
 ```
-Y = X₂·f₁(X₁) + X₆·f₂(X₃) + X₈·f₃(X₁) + X₅·f₄(X₃) + ε
+Y = X₂·f₁(Z₁) + X₆·f₂(Z₂) + X₈·f₃(Z₁) + X₅·f₄(Z₂) + ε
 ```
 
 **Data Generating Process**:
-- **Graphical Model**: p = 9 variabili, graph = "random", prob = 0.23
+- **Graphical Model**: p = 9 variabili, graph = "random", prob = 0.4
 - **Funzioni coefficiente**:
   - f₁(z) = z
   - f₂(z) = 2·tanh(z)
   - f₃(z) = 2·exp(-0.5z²)
   - f₄(z) = 2.5·sin(2z)·exp(-0.2z²)
 
-**Note**: In questo setup, X₁ e X₃ (variabili di smoothing) possono condividere dipendenze attraverso il GGM, ma sono usate in funzioni diverse. Le variabili coefficiente (X₂, X₆, X₈, X₅) provengono anch'esse dal GGM.
+**Note**: In questo setup, Z₁ e Z₂ (variabili di smoothing) sono indipendenti rispetto alle varibaili attive. Le variabili attive che non entrano nei coefficienti (X₂, X₆, X₈, X₅) sono prese dallo stesso grafo.
 
 **Output folders**:
 ```
@@ -64,21 +64,13 @@ Y = X₂·f₁(X₁) + X₆·f₂(X₃) + X₈·f₃(X₁) + X₅·f₄(X₃) + 
 **Data Generating Process**:
 - **Graphical Model**: p = 9 variabili, graph = "random", prob = 0.4 (maggiore connettività)
 - **Funzioni coefficiente**: Identiche alla struttura di indipendenza
-- **Caratteristica distintiva**: Maggiore probabilità di connessioni nel grafo (0.4 vs 0.23)
+- **Caratteristica distintiva**: Maggiore probabilità di connessioni nel grafo 
 
 **Output folders**:
 ```
 Smooth_BF/500_dependence/
 P-spline/500_dependence/
 ```
-
-### Differenza Chiave tra le Strutture
-
-La differenza principale tra le due strutture non è nel modello, ma nella **probabilità di connessione del GGM**:
-- **Indipendenza**: prob = 0.23 → grafo più sparso → minore dipendenza tra variabili
-- **Dipendenza**: prob = 0.4 → grafo più denso → maggiore dipendenza tra variabili
-
-Questo permette di studiare come l'intensità delle dipendenze nel GGM influenzi le performance di stima.
 
 ## Struttura delle Cartelle
 
@@ -125,49 +117,22 @@ File: `Pointwise_MSE_*.png`
 
 Pannelli 2×2 che mostrano il Mean Squared Error punto per punto per ciascuna delle 4 funzioni coefficiente lungo la griglia di valutazione [-3, 3].
 
-**Interpretazione**:
-- Curve più basse = migliore performance
-- Permette di identificare regioni dello spazio dove la stima è più difficile
-- Confronto visivo tra le 4 diverse forme funzionali
-
 ### 2. Pointwise Bias Plot
 File: `Pointwise_bias_*.png`
 
 Pannelli 2×2 che mostrano il bias punto per punto (media delle stime - funzione vera) per ciascuna funzione.
 
-**Interpretazione**:
-- Oscillazioni attorno allo zero = bias basso
-- Deviazioni sistematiche indicano distorsione della stima
-- Identifica se il metodo tende a sovrastimare o sottostimare in certe regioni
-
 ### 3. Estimated Functions Plot
-File: `VC_estimate_*.png` o `VC estimate *.png`
+File: `VC_estimate_*.png` 
 
 Pannelli 2×2 che sovrappongono:
-- Funzione vera (linea colorata/nera)
-- Funzioni stimate da ogni replicazione MC (linee grigie trasparenti)
-- Media delle funzioni stimate (linea blu/rossa spessa)
-
-**Interpretazione**:
-- Permette di visualizzare la variabilità delle stime
-- La fascia di linee grigie rappresenta la distribuzione delle stime
-- Confronto immediato tra funzione vera e stima media
+- Funzioni medie stimate dalle replicazione MC 
 
 ### 4. DGP Graph
-File: `DPG_graph.png` (uno per metodo)
-
-Visualizzazione del Gaussian Graphical Model utilizzato per generare i dati.
-
-**Caratteristiche**:
-- Nodi = variabili (X₁, X₂, ..., X₉)
-- Archi = dipendenze condizionali
-- Generato con `qgraph`
-- Colori: edge.color="#7A6F8E", color="#EDE8F2"
+File: `DPG_graph.png` grafo iniziale
 
 ### 5. Results JSON
 File: `results.json`, `results_sb.json`, `results_gam.json`
-
-Sommario numerico delle performance con IBS e IMSE per ogni funzione.
 
 ## Metriche di Performance
 
@@ -178,25 +143,12 @@ Sommario numerico delle performance con IBS e IMSE per ogni funzione.
 IBS = mean((mean(f.hat) - f.true)²)
 ```
 
-**Interpretazione**:
-- Misura il bias quadratico medio integrato
-- Quantifica la distorsione sistematica della stima
-- Valori più bassi = minore bias
-- Non dipende dalla variabilità delle stime
-
 ### IMSE (Integrated Mean Squared Error)
 
 **Formula**:
 ```r
 IMSE = 6 × mean(pointwise_MSE)
 ```
-
-**Interpretazione**:
-- Misura l'errore quadratico medio integrato
-- Combina bias e varianza
-- Il fattore 6 = range width: max(x_grid) - min(x_grid) = 3 - (-3)
-- Metrica principale per confrontare metodi
-- Valori più bassi = migliore performance complessiva
 
 ### Esempio JSON Output
 
@@ -259,27 +211,8 @@ Implementa due approcci per testare la rilevanza delle funzioni coefficiente usa
 
 **H₀**: f₂(z₂) = 0 (la funzione oscilla attorno allo zero senza effetto sistematico)
 
-**Procedura**:
-1. Stima il modello completo: `Y ~ sb(z₁, by=x₁) + sb(z₂, by=x₂)`
-2. Calcola MSE del modello: `mse.l`
-3. Per i = 1 a nsim:
-   - Permuta casualmente x₂ → x₂.p
-   - Stima `Y ~ sb(z₁, by=x₁) + sb(z₂, by=x₂.p)`
-   - Calcola MSE permutato: `mse.b[i]`
-4. p-value = proporzione di `mse.b ≤ mse.l`
-
-**Interpretazione**: Se p-value è basso, rifiutiamo H₀ → la funzione è significativa.
-
 ### Test 2: Permutazione della Variabile di Smoothing
 
 **H₀**: f(z₂) = costante (la funzione non varia con z₂)
 
-**Procedura**:
-1. Stima il modello completo: `Y ~ sb(z₁, by=x₁) + sb(z₂, by=x₂)`
-2. Calcola MSE del modello: `mse.l`
-3. Per i = 1 a nsim:
-   - Permuta casualmente z₂ → z₂.p
-   - Stima `Y ~ sb(z₁, by=x₁) + sb(z₂.p, by=x₂)`
-   - Calcola MSE permutato: `mse.b[i]`
-4. p-value = proporzione di `mse.b ≤ mse.l`
 
