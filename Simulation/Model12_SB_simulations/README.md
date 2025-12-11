@@ -14,7 +14,7 @@ Studio di simulazione Monte Carlo per confrontare due metodi di stima per modell
 - **Monte Carlo replications**: nsim = 100
 - **Sample size**: n = 500
 - **Evaluation grid**: x_grid = seq(-3, 3, length = n)
-- **Data generation**: Multivariate normal distributions con struttura GGM (via `huge.generator`)
+- **Data generation**: Multivariate normal distributions 
 - **Parallelization**: `doParallel` con tutti i core disponibili - 1
 
 ## Strutture di Dipendenza Analizzate
