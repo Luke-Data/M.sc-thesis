@@ -1,4 +1,4 @@
-# SB simulation indipendent smoothing variable
+# Smooth variable indipendent from active variable
 
 library(foreach)
 library(doParallel)
@@ -8,24 +8,25 @@ library(mvtnorm)
 library(ggplot2)
 library(gridExtra)
 library(patchwork)
+library(tictoc)
 
-setwd('C:\\Users\\gargh\\Documents\\Tesi\\Code\\Simulation\\Model12_SB_simulations\\Mixed\\n500')
+setwd('C:\\Users\\gargh\\Documents\\Tesi\\Code\\Simulation\\Model12_SB_simulations\\Mixed\\500_independence')
 
 n <- 500
-p <- 15
+p <- 9
 
 set.seed(12)
 
-# Gaussian Graphichal model; Graph = "random") ----
-
-Gr <- huge.generator(n, p, graph="random", prob=0.23)
+# Gaussian Graphical model ----
+Gr <- huge.generator(n, p, graph="random", prob=0.4)
 Adj.true <- as.matrix(Gr$theta)
 dati <- as.data.frame(Gr$data)
 qgraph::qgraph(Adj.true, type="UG", edge.color="#7A6F8E", color="#EDE8F2")
 colnames(dati) <- paste0("X", 1:p)
 
-# coefficient function
+dpg_sigma <- Gr$sigma
 
+# coefficient function
 f1 <- function(x) x                          
 f2 <- function(x) 2 * tanh(x)                
 f3 <- function(x) 2 * exp(-0.5 * x^2)
@@ -65,8 +66,8 @@ newdata <- data.frame(
   X6 = rep(1, n), 
   X8 = rep(1, n), 
   X5 = rep(1,n),
-  X3 = x_grid,
-  X9 = x_grid
+  Z1 = x_grid,
+  Z2 = x_grid
 )
 
 f1.true <- f1(x_grid) - mean(f1(x_grid))
@@ -77,6 +78,7 @@ f4.true <- f4(x_grid) - mean(f4(x_grid))
 # option.RNG = 123, il seme in parallelo si perde 
 # una iterazione per vedere se la parallelizzazione funziona
 
+tic()
 sim.results <- foreach(i = 1:nsim, .packages = c("wsbackfit", "mvtnorm"), 
            .export = c("f1", "f2", "f3", "f4", "n", "x_grid", "newdata", "dpg_sigma","p",
                        "f1.true", "f2.true", "f3.true", "f4.true")) %dopar% {
@@ -85,46 +87,52 @@ sim.results <- foreach(i = 1:nsim, .packages = c("wsbackfit", "mvtnorm"),
  
  tryCatch({
    
-   data <- data.frame(rmvnorm(n,mean = rep(0,p), sigma = dpg_sigma))
+  data <- data.frame(rmvnorm(n,mean = rep(0,p), sigma = dpg_sigma))
    
-   Y <- data$X1 * f1(data$X9) + data$X6 * f2(data$X3) + data$X8 * f3(data$X9) +
-     data$X5 * f4(data$X3) + rnorm(n)
+  data$Z1 <- rnorm(n)
+  data$Z2 <- rnorm(n)
+
+  Y <- data$X1 * f1(data$Z1) + data$X6 * f2(data$Z2) + data$X8 * f3(data$Z1) +
+    data$X5 * f4(data$Z2) + rnorm(n)
    
-   data <- data.frame(cbind(Y,data))
+  data <- data.frame(cbind(Y,data))
    
+  m0 <- sback(Y ~ sb(Z1,by=X1,h=-1) + sb(Z2,by=X6,h=-1) + sb(Z1,by=X8,h=-1) + sb(Z2,by=X5,h=-1), data=data)
    
-   m0 <- sback(Y ~ sb(X9,by=X1,h=-1) + sb(X3,by=X6,h=-1) + sb(X9,by=X8,h=-1) + sb(X3,by=X5,h=-1), data=data)
+  pred <- predict(m0, newdata = newdata)
    
-   pred <- predict(m0, newdata = newdata)
+  f.hat1 <- (pred$coeff[[grep("X1:Z1|Z1:X1", names(pred$coeff), value=T)]] * x_grid + 
+                pred$peffects[,grep("sb\\(Z1.*by = X1", colnames(pred$peffects))])
    
-   f.hat1 <- (pred$coeff[[grep("X1:X9|X9:X1", names(pred$coeff), value=T)]] * x_grid + 
-                pred$peffects[,grep("sb\\(X9.*by = X1", colnames(pred$peffects))])
+  val.hat1 <- f.hat1 - mean(f.hat1)
+  val.se1  <- (val.hat1 - f1.true)^2
+  
+  f.hat2 <- (pred$coeff[[grep("X6:Z2|Z2:X6", names(pred$coeff), value=T)]] * x_grid + 
+                pred$peffects[,grep("sb\\(Z2.*by = X6", colnames(pred$peffects))])
+  val.hat2 <- f.hat2 - mean(f.hat2)
+  val.se2  <- (val.hat2 - f2.true)^2
    
-   val.hat1 <- f.hat1 - mean(f.hat1)
-   val.se1  <- (val.hat1 - f1.true)^2
-   
-   f.hat2 <- (pred$coeff[[grep("X6:X3|X3:X6", names(pred$coeff), value=T)]] * x_grid + 
-                pred$peffects[,grep("sb\\(X3.*by = X6", colnames(pred$peffects))])
-   val.hat2 <- f.hat2 - mean(f.hat2)
-   val.se2  <- (val.hat2 - f2.true)^2
-   
-   f.hat3 <- (pred$coeff[[grep("X8:X9|X9:X8", names(pred$coeff), value=T)]] * x_grid + 
-                pred$peffects[,grep("sb\\(X9.*by = X8", colnames(pred$peffects))])
-   val.hat3 <- f.hat3 - mean(f.hat3)
-   val.se3  <- (val.hat3 - f3.true)^2
+  f.hat3 <- (pred$coeff[[grep("X8:Z1|Z1:X8", names(pred$coeff), value=T)]] * x_grid + 
+                pred$peffects[,grep("sb\\(Z1.*by = X8", colnames(pred$peffects))])
+  val.hat3 <- f.hat3 - mean(f.hat3)
+  val.se3  <- (val.hat3 - f3.true)^2
    
    # 4. f4 (X5 * f(X3))
-   f.hat4 <- (pred$coeff[[grep("X5:X3|X3:X5", names(pred$coeff), value=T)]] * x_grid + 
-                pred$peffects[,grep("sb\\(X3.*by = X5", colnames(pred$peffects))])
-   val.hat4 <- f.hat4 - mean(f.hat4)
-   val.se4  <- (val.hat4 - f4.true)^2
+  f.hat4 <- (pred$coeff[[grep("X5:Z2|Z2:X5", names(pred$coeff), value=T)]] * x_grid + 
+                pred$peffects[,grep("sb\\(Z2.*by = X5", colnames(pred$peffects))])
+  val.hat4 <- f.hat4 - mean(f.hat4)
+  val.se4  <- (val.hat4 - f4.true)^2
    
-   list(
-     hat = list(val.hat1, val.hat2, val.hat3, val.hat4),
-     se  = list(val.se1, val.se2, val.se3, val.se4)
+  list(
+    hat = list(val.hat1, val.hat2, val.hat3, val.hat4),
+    se  = list(val.se1, val.se2, val.se3, val.se4),
+    x_data = list(data$Z1, data$Z2, data$Z1, data$Z2)
    )
  }, error = function(e) NULL)
 }
+
+stopCluster(cl)
+toc()
 
 valid_results <- sim.results[sapply(sim.results, function(x) {
   !is.null(x) && length(x$hat[[1]]) == n
@@ -148,8 +156,6 @@ for(i in 1:nsim_valid) {
   }
 }
 
-stopCluster(cl)
-
 # integrated square bias (ibs)
 
 ibs.1 <- mean((apply(f.hat[[1]],1,mean) - f1.true)^2)
@@ -157,7 +163,7 @@ ibs.2 <- mean((apply(f.hat[[2]],1,mean) - f2.true)^2)
 ibs.3 <- mean((apply(f.hat[[3]],1,mean) - f3.true)^2)
 ibs.4 <- mean((apply(f.hat[[4]],1,mean) - f4.true)^2)
 
-ibs <- c(ibs.1,ibs.2,ibs.3,ibs.4)
+ibs <- round(c(ibs.1, ibs.2, ibs.3, ibs.4),3)
 
 # integrated MSE (imse)
 
@@ -166,14 +172,13 @@ imse.2 <- (6 * mean(apply(f.se[[2]],1,mean)))
 imse.3 <- (6 * mean(apply(f.se[[3]],1,mean)))
 imse.4 <- (6 * mean(apply(f.se[[4]],1,mean)))
 
-imse <- c(imse.1,imse.2,imse.3,imse.4)
+imse <- round(c(imse.1, imse.2, imse.3, imse.4),3)
 
-# Integrated MSE plot ----
 
-labels_list <- c("X[1]*f[1](X[9])", "X[6]*f[2](X[3])", "X[8]*f[3](X[9])", 
-                 "X[5]*f[4](X[3])")
-y_labels <- c("MSE~(f[list(1,9)])", "MSE~(f[list(6,3)])", "MSE~(f[list(8,9)])", 
-              "MSE~(f[list(5,3)])")
+labels_list <- c("X[1]*f[1](Z[1])", "X[6]*f[2](Z[2])", "X[8]*f[3](Z[1])", 
+                 "X[5]*f[4](Z[2])")
+y_labels <- c("MSE~(f[list(1,1)])", "MSE~(f[list(6,2)])", "MSE~(f[list(8,1)])", 
+              "MSE~(f[list(5,2)])")
 
 plot_data <- data.frame()
 for (j in 1:4) {
@@ -186,15 +191,12 @@ for (j in 1:4) {
 }
 plot_data$Function <- factor(plot_data$Func_Name, levels = labels_list)
 
-# Colori
-line_col <- "#1A237E"
+line_col <- "#2a38d3ff"
 fill_col <- "#7986CB"
 
-# Theme personalizzato
 theme_mse <- theme_minimal(base_size = 11) +
   theme(
-    plot.title = element_text(hjust = 0.5, face = "italic", size = 11, 
-                              margin = margin(b = 10)),
+    plot.title = element_text(hjust = 0.5, face = "italic", size = 11, margin = margin(b = 10)),
     axis.title.y = element_text(size = 9, margin = margin(r = 5)),
     axis.title.x = element_blank(),
     axis.text = element_text(size = 8, color = "gray30"),
@@ -203,7 +205,6 @@ theme_mse <- theme_minimal(base_size = 11) +
     plot.margin = margin(10, 15, 10, 10)
   )
 
-# Genera i plot
 plot_list <- list()
 for (j in 1:4) {
   subset_data <- plot_data[plot_data$Func_Name == labels_list[j], ]
@@ -211,56 +212,46 @@ for (j in 1:4) {
   p <- ggplot(subset_data, aes(x = x, y = mse)) +
     geom_area(fill = fill_col, alpha = 0.3) +
     geom_line(color = line_col, linewidth = 0.7) +
-    coord_cartesian(ylim = c(0, 10)) +
+    coord_cartesian(ylim = c(0, 30)) +
     labs(title = parse(text = labels_list[j]), y = parse(text = y_labels[j])) +
     theme_mse
   
   plot_list[[j]] <- p
 }
 
-# Combina con patchwork
-combined <- (plot_list[[1]] | plot_list[[2]]) / 
+combined_mse <- (plot_list[[1]] | plot_list[[2]]) / 
   (plot_list[[3]] | plot_list[[4]]) +
   plot_annotation(
-    title = "Pointwise Mean Squared Error (MSE)",
-    theme = theme(
-      plot.title = element_text(hjust = 0.5, face = "bold", size = 14, 
-                                margin = margin(b = 15))
-    )
+    title = "Pointwise MSE (GAM P-splines)",
+    theme = theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 14, margin = margin(b = 15)))
   )
+print(combined_mse)
 
-print(combined)
 
-################################################################################
 
-# Preparazione dati
-labels_list <- c("X[1]*f[1](X[9])", "X[6]*f[2](X[3])", "X[8]*f[3](X[9])", 
-                 "X[5]*f[4](X[3])")
-y_labels <- c("Bias~(f[list(1,9)])", "Bias~(f[list(6,3)])", "Bias~(f[list(8,9)])", 
-              "Bias~(f[list(5,3)])")
+# BIAS ----
 
+y_labels_bias <- c("Bias~(f[list(1,1)])", "Bias~(f[list(6,3)])", "Bias~(f[list(8,1)])", 
+                   "Bias~(f[list(5,3)])")
 f_true_list <- list(f1.true, f2.true, f3.true, f4.true)
 
-plot_data <- data.frame()
+plot_data_bias <- data.frame()
 for (j in 1:4) {
   temp_df <- data.frame(
     x = x_grid,
-    bias = (apply(f.hat[[j]], 1, mean) - f_true_list[[j]]),
+    bias = apply(f.hat[[j]], 1, mean) - f_true_list[[j]],
     Func_Name = labels_list[j]
   )
-  plot_data <- rbind(plot_data, temp_df)
+  plot_data_bias <- rbind(plot_data_bias, temp_df)
 }
-plot_data$Function <- factor(plot_data$Func_Name, levels = labels_list)
+plot_data_bias$Function <- factor(plot_data_bias$Func_Name, levels = labels_list)
 
-# Colori
-line_col <- "#2E7D32"
-fill_col <- "#81C784"
+line_col_bias <- "#2E7D32"
+fill_col_bias <- "#81C784"
 
-# Theme personalizzato
 theme_bias <- theme_minimal(base_size = 11) +
   theme(
-    plot.title = element_text(hjust = 0.5, face = "italic", size = 11, 
-                              margin = margin(b = 10)),
+    plot.title = element_text(hjust = 0.5, face = "italic", size = 11, margin = margin(b = 10)),
     axis.title.y = element_text(size = 9, margin = margin(r = 5)),
     axis.title.x = element_blank(),
     axis.text = element_text(size = 8, color = "gray30"),
@@ -269,48 +260,38 @@ theme_bias <- theme_minimal(base_size = 11) +
     plot.margin = margin(10, 15, 10, 10)
   )
 
-# Genera i plot
-plot_list <- list()
+plot_list_bias <- list()
 for (j in 1:4) {
-  subset_data <- plot_data[plot_data$Func_Name == labels_list[j], ]
+  subset_data <- plot_data_bias[plot_data_bias$Func_Name == labels_list[j], ]
   
   p <- ggplot(subset_data, aes(x = x, y = bias)) +
-    geom_area(fill = fill_col, alpha = 0.3) +
-    geom_line(color = line_col, linewidth = 0.6) +
-    coord_cartesian(ylim = c(-0.6, 0.6)) +
-    labs(title = parse(text = labels_list[j]), y = parse(text = y_labels[j])) +
+    geom_area(fill = fill_col_bias, alpha = 0.3) +
+    geom_line(color = line_col_bias, linewidth = 0.6) +
+    coord_cartesian(ylim = c(-0.5, 0.7)) +
+    labs(title = parse(text = labels_list[j]), y = parse(text = y_labels_bias[j])) +
     theme_bias
   
-  plot_list[[j]] <- p
+  plot_list_bias[[j]] <- p
 }
 
-# Combina con patchwork
-combined <- (plot_list[[1]] | plot_list[[2]]) / 
-  (plot_list[[3]] | plot_list[[4]]) +
+combined_bias <- (plot_list_bias[[1]] | plot_list_bias[[2]]) / 
+  (plot_list_bias[[3]] | plot_list_bias[[4]]) +
   plot_annotation(
-    title = "Pointwise Bias",
-    theme = theme(
-      plot.title = element_text(hjust = 0.5, face = "bold", size = 14, 
-                                margin = margin(b = 15))
-    )
+    title = "Pointwise Bias Smooth BF",
+    theme = theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 14, margin = margin(b = 15)))
   )
+print(combined_bias)
 
-print(combined)
 
-# Function plot ----
-library(ggplot2)
-library(patchwork)
-library(cowplot)
 
-# Preparazione dati
-f_true_funcs <- list(f1, f2, f3, f4)
-x_labels <- c("X[9]", "X[3]", "X[9]", "X[3]")
-y_labels <- c("X[1]*f[1](X[9])", "X[6]*f[2](X[3])", "X[8]*f[3](X[9])", "X[5]*f[4](X[3])")
+f_true_list <- list(f1.true, f2.true, f3.true, f4.true)
+x_labels <- c("Z[1]", "Z[2]", "Z[1]", "Z[2]")
+y_labels_func <- c("X[1]*f[1](Z[1])", "X[6]*f[2](Z[2])", "X[8]*f[3](Z[1])", "X[5]*f[4](Z[2])")
 
-true_col <- "#00695C"
-est_col <- "#AD1457"
-ribbon_col <- "#E0E0E0"
-# Theme personalizzato
+true_col <- "#a6bbff"
+est_col <- "#c12068ff"
+ribbon_col <- "#eae0edff"
+
 theme_func <- theme_minimal(base_size = 11) +
   theme(
     plot.title = element_blank(),
@@ -324,35 +305,39 @@ theme_func <- theme_minimal(base_size = 11) +
     legend.position = "none"
   )
 
-# Genera i plot
-plot_list <- list()
+x_rug <- valid_results[[nsim_valid]]$x_data
+
+plot_list_func <- list()
 for (j in 1:4) {
   
   plot_df <- data.frame(
     x = x_grid,
-    true_f = f_true_funcs[[j]](x_grid),
+    true_f = f_true_list[[j]],
     estimate = apply(f.hat[[j]], 1, mean),
     lower = apply(f.hat[[j]], 1, quantile, 0.025),
     upper = apply(f.hat[[j]], 1, quantile, 0.975)
   )
   
+  rug_df <- data.frame(x_rug = x_rug[[j]])
+  
   p <- ggplot(plot_df, aes(x = x)) +
     geom_hline(yintercept = 0, color = "gray40", linewidth = 0.5) +
     geom_vline(xintercept = 0, color = "gray40", linewidth = 0.5) +
     geom_ribbon(aes(ymin = lower, ymax = upper), fill = ribbon_col, alpha = 0.7) +
-    geom_line(aes(y = true_f, color = "True function"), linewidth = 1) +
-    geom_line(aes(y = estimate, color = "Estimate"), linewidth = 0.8, linetype = "dashed") +
+    geom_line(aes(y = true_f, color = "True function"), linewidth = 0.6) +
+    geom_line(aes(y = estimate, color = "Estimate"), linewidth = 0.6, linetype = "dashed") +
+    geom_rug(data = rug_df, aes(x = x_rug), sides = "b", color = "black", alpha = 0.5, linewidth = 0.3) +
     scale_color_manual(values = c("True function" = true_col, "Estimate" = est_col)) +
-    coord_cartesian(ylim = c(-9, 5)) +
-    labs(x = parse(text = x_labels[j]), y = parse(text = y_labels[j])) +
+    coord_cartesian(ylim = c(-10, 10)) +
+    labs(x = parse(text = x_labels[j]), y = parse(text = y_labels_func[j])) +
     theme_func
   
-  plot_list[[j]] <- p
+  plot_list_func[[j]] <- p
 }
-# Legenda separata
+
 legend_plot <- ggplot(data.frame(x = 1, y = 1), aes(x, y)) +
-  geom_line(aes(color = "True function"), linewidth = 1) +
-  geom_line(aes(color = "Estimate"), linewidth = 0.8, linetype = "dashed") +
+  geom_line(aes(color = "True function"), linewidth = 0.6) +
+  geom_line(aes(color = "Estimate"), linewidth = 0.6, linetype = "dashed") +
   scale_color_manual(values = c("True function" = true_col, "Estimate" = est_col)) +
   theme_void() +
   theme(
@@ -361,75 +346,71 @@ legend_plot <- ggplot(data.frame(x = 1, y = 1), aes(x, y)) +
     legend.text = element_text(size = 10),
     legend.key.width = unit(1.5, "cm")
   ) +
-  guides(color = guide_legend(override.aes = list(linewidth = c(0.8, 0.8), linetype = c("solid", "dashed"))))
+  guides(color = guide_legend(override.aes = list(linewidth = 1.2, linetype = c("solid", "dashed"))))
 
-# Estrai solo la legenda
 legend_grob <- cowplot::get_legend(legend_plot)
 
-# Combina con patchwork
-combined <- (plot_list[[1]] | plot_list[[2]]) / 
-  (plot_list[[3]] | plot_list[[4]]) +
+combined_func <- (plot_list_func[[1]] | plot_list_func[[2]]) / 
+  (plot_list_func[[3]] | plot_list_func[[4]]) +
   plot_annotation(
-    title = "True vs Estimated Functions",
-    theme = theme(
-      plot.title = element_text(hjust = 0.5, face = "bold", size = 14, 
-                                margin = margin(b = 5))
-    )
+    title = "True vs Estimated Functions (GAM P-splines)",
+    theme = theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 14, margin = margin(b = 5)))
   )
 
-# Layout finale con legenda
-wrap_elements(legend_grob) / combined + plot_layout(heights = c(0.08, 1))
-
-
+wrap_elements(legend_grob) / combined_func + plot_layout(heights = c(0.08, 1))
 
 # Save results to JSON ----
 library(jsonlite)
 results_json <- list(
   sample_size = n,
   replications = nsim,
-  f1_X9X1 = list(ibs = unname(ibs[1]), imse = unname(imse[1])),
-  f2_X3X6 = list(ibs = unname(ibs[2]), imse = unname(imse[2])),
-  f3_X9X8 = list(ibs = unname(ibs[3]), imse = unname(imse[3])),
-  f4_X3X5 = list(ibs = unname(ibs[4]), imse = unname(imse[4]))
+  f1_X1Z1 = list(ibs = unname(ibs[1]), imse = unname(imse[1])),
+  f2_X6Z2 = list(ibs = unname(ibs[2]), imse = unname(imse[2])),
+  f3_X8Z1 = list(ibs = unname(ibs[3]), imse = unname(imse[3])),
+  f4_X5Z2 = list(ibs = unname(ibs[4]), imse = unname(imse[4]))
 )
 write_json(results_json, "results.json", pretty = TRUE, auto_unbox = TRUE)
 
 
-##################
-## dep variable ## ----
-##################
 
 
-# SB simulation graphical model
 
-setwd('C:\\Users\\gargh\\Documents\\Tesi\\Code\\Simulation\\Model12_SB_simulations\\Mixed\\500d')
 
-# Gaussian Graphichal model; Graph = "random") ----
+
+
+
+# Smooth variabile not indipendent from active variable ----
+
+# SB simulation graph
+
+setwd('C:\\Users\\gargh\\Documents\\Tesi\\Code\\Simulation\\Model12_SB_simulations\\Smooth_BF\\500_dependence')
 
 n <- 500
-p <- 15
+p <- 9
 
 set.seed(12)
 
-Gr <- huge.generator(n, p, graph="random", prob=0.23)
+# Gaussian Graphical model ----
+Gr <- huge.generator(n, p, graph="random", prob=0.4)
 Adj.true <- as.matrix(Gr$theta)
 dati <- as.data.frame(Gr$data)
 qgraph::qgraph(Adj.true, type="UG", edge.color="#7A6F8E", color="#EDE8F2")
 colnames(dati) <- paste0("X", 1:p)
 
+dpg_sigma <- Gr$sigma
 # coefficient function
 
 f1 <- function(x) x                          
 f2 <- function(x) 2 * tanh(x)                
-f3 <- function(x) 2 * exp(-0.5 * x^2)    
+f3 <- function(x) 2 * exp(-0.5 * x^2)
 f4 <- function(x) 2.5 * sin(2*x) * exp(-0.2*x^2)
+
 
 n_cores <- parallel::detectCores(logical = FALSE) - 1
 cl <- makeCluster(n_cores)
 registerDoParallel(cl)
 
 dpg_sigma <- Gr$sigma
-
 # MC integrated bias, integrated mse, nsim = 100 ----
 
 n <- 500
@@ -453,12 +434,12 @@ f.se1 <- list(
 
 newdata1 <- data.frame(
   Y  = rep(0, n),
-  X1 = rep(1, n), 
+  X2 = rep(1, n), 
   X6 = rep(1, n), 
   X8 = rep(1, n), 
   X5 = rep(1,n),
-  X11 = x_grid,
-  X13 = x_grid
+  X1 = x_grid,
+  X3 = x_grid
 )
 
 f1.true <- f1(x_grid) - mean(f1(x_grid))
@@ -466,7 +447,7 @@ f2.true <- f2(x_grid) - mean(f2(x_grid))
 f3.true <- f3(x_grid) - mean(f3(x_grid))
 f4.true <- f4(x_grid) - mean(f4(x_grid))
 
-
+tic()
 sim.results1 <- foreach(i = 1:nsim, .packages = c("wsbackfit", "mvtnorm"), 
                        .export = c("f1", "f2", "f3", "f4", "n", "x_grid", "newdata1", "dpg_sigma","p",
                                    "f1.true", "f2.true", "f3.true", "f4.true")) %dopar% {
@@ -476,44 +457,50 @@ sim.results1 <- foreach(i = 1:nsim, .packages = c("wsbackfit", "mvtnorm"),
    tryCatch({
      
      data <- data.frame(rmvnorm(n,mean = rep(0,p), sigma = dpg_sigma))
+     colnames(data) <- paste0("X", 1:p)
      
-     Y <- data$X1 * f1(data$X11) + data$X6 * f2(data$X13) + data$X8 * f3(data$X11) +
-       data$X5 * f4(data$X13) + rnorm(n)
+     Y <- data$X2 * f1(data$X1) + data$X6 * f2(data$X3) + data$X8 * f3(data$X1) +
+       data$X5 * f4(data$X3) + rnorm(n)
      
-     data <- data.frame(cbind(Y,data))
+     data$Y <- Y
      
-     m0 <- sback(Y ~ sb(X11,by=X1,h=-1) + sb(X13,by=X6,h=-1) + sb(X11,by=X8,h=-1) + sb(X13,by=X5,h=-1), data=data)
+     m0 <- sback(Y ~ sb(X1,by=X2,h=-1) + sb(X3,by=X6,h=-1) + sb(X1,by=X8,h=-1) + sb(X3,by=X5,h=-1), data=data)
      
      pred <- predict(m0, newdata = newdata1)
      
-     f.hat1 <- (pred$coeff[[grep("X1:X11|X11:X1", names(pred$coeff), value=T)]] * x_grid + 
-                  pred$peffects[,grep("sb\\(X11.*by = X1", colnames(pred$peffects))])
+     f.hat1 <- (pred$coeff[[grep("X2:X1|X1:X2", names(pred$coeff), value=T)]] * x_grid + 
+                  pred$peffects[,grep("sb\\(X1.*by = X2", colnames(pred$peffects))])
      
      val.hat1 <- f.hat1 - mean(f.hat1)
      val.se1  <- (val.hat1 - f1.true)^2
      
-     f.hat2 <- (pred$coeff[[grep("X6:X13|X13:X6", names(pred$coeff), value=T)]] * x_grid + 
-                  pred$peffects[,grep("sb\\(X13.*by = X6", colnames(pred$peffects))])
+     f.hat2 <- (pred$coeff[[grep("X6:X3|X3:X6", names(pred$coeff), value=T)]] * x_grid + 
+                  pred$peffects[,grep("sb\\(X3.*by = X6", colnames(pred$peffects))])
      val.hat2 <- f.hat2 - mean(f.hat2)
      val.se2  <- (val.hat2 - f2.true)^2
      
-     f.hat3 <- (pred$coeff[[grep("X8:X11|X11:X8", names(pred$coeff), value=T)]] * x_grid + 
-                  pred$peffects[,grep("sb\\(X11.*by = X8", colnames(pred$peffects))])
+     f.hat3 <- (pred$coeff[[grep("X8:X1|X1:X8", names(pred$coeff), value=T)]] * x_grid + 
+                  pred$peffects[,grep("sb\\(X1.*by = X8", colnames(pred$peffects))])
      val.hat3 <- f.hat3 - mean(f.hat3)
      val.se3  <- (val.hat3 - f3.true)^2
      
      # 4. f4 (X5 * f(X3))
-     f.hat4 <- (pred$coeff[[grep("X5:X13|X13:X5", names(pred$coeff), value=T)]] * x_grid + 
-                  pred$peffects[,grep("sb\\(X13.*by = X5", colnames(pred$peffects))])
+     f.hat4 <- (pred$coeff[[grep("X5:X3|X3:X5", names(pred$coeff), value=T)]] * x_grid + 
+                  pred$peffects[,grep("sb\\(X3.*by = X5", colnames(pred$peffects))])
      val.hat4 <- f.hat4 - mean(f.hat4)
      val.se4  <- (val.hat4 - f4.true)^2
      
      list(
        hat = list(val.hat1, val.hat2, val.hat3, val.hat4),
-       se  = list(val.se1, val.se2, val.se3, val.se4)
+       se  = list(val.se1, val.se2, val.se3, val.se4),
+       x_data = list(data$X1, data$X3, data$X1, data$X3)
      )
    }, error = function(e) NULL)
  }
+
+stopCluster(cl)
+toc()
+
 
 valid_results <- sim.results1[sapply(sim.results1, function(x) {
   !is.null(x) && length(x$hat[[1]]) == n
@@ -537,8 +524,6 @@ for(i in 1:nsim_valid) {
   }
 }
 
-stopCluster(cl)
-
 # integrated square bias (ibs)
 
 ibs.1 <- mean((apply(f.hat1[[1]],1,mean) - f1.true)^2)
@@ -546,7 +531,7 @@ ibs.2 <- mean((apply(f.hat1[[2]],1,mean) - f2.true)^2)
 ibs.3 <- mean((apply(f.hat1[[3]],1,mean) - f3.true)^2)
 ibs.4 <- mean((apply(f.hat1[[4]],1,mean) - f4.true)^2)
 
-ibs <- c(ibs.1,ibs.2,ibs.3,ibs.4)
+ibs <- round(c(ibs.1,ibs.2,ibs.3,ibs.4),3)
 
 # integrated MSE (imse)
 
@@ -555,14 +540,15 @@ imse.2 <- (6 * mean(apply(f.se1[[2]],1,mean)))
 imse.3 <- (6 * mean(apply(f.se1[[3]],1,mean)))
 imse.4 <- (6 * mean(apply(f.se1[[4]],1,mean)))
 
-imse <- c(imse.1,imse.2,imse.3,imse.4)
+imse <- round(c(imse.1,imse.2,imse.3,imse.4),3)
 
 # Integrated MSE plot ----
 
-labels_list <- c("X[1]*f[1](X[11])", "X[6]*f[2](X[13])", "X[8]*f[3](X[11])", 
-                 "X[5]*f[4](X[13])")
-y_labels <- c("MSE~(f[list(1,11)])", "MSE~(f[list(6,13)])", "MSE~(f[list(8,11)])", 
-              "MSE~(f[list(5,13)])")
+# MSE Plot ----
+labels_list <- c("X[2]*f[1](X[1])", "X[6]*f[2](X[3])", "X[8]*f[3](X[1])", 
+                 "X[5]*f[4](X[3])")
+y_labels <- c("MSE~(f[list(2,1)])", "MSE~(f[list(6,3)])", "MSE~(f[list(8,1)])", 
+              "MSE~(f[list(5,3)])")
 
 plot_data <- data.frame()
 for (j in 1:4) {
@@ -575,15 +561,12 @@ for (j in 1:4) {
 }
 plot_data$Function <- factor(plot_data$Func_Name, levels = labels_list)
 
-# Colori
-line_col <- "#1A237E"
+line_col <- "#2a38d3ff"
 fill_col <- "#7986CB"
 
-# Theme personalizzato
 theme_mse <- theme_minimal(base_size = 11) +
   theme(
-    plot.title = element_text(hjust = 0.5, face = "italic", size = 11, 
-                              margin = margin(b = 10)),
+    plot.title = element_text(hjust = 0.5, face = "italic", size = 11, margin = margin(b = 10)),
     axis.title.y = element_text(size = 9, margin = margin(r = 5)),
     axis.title.x = element_blank(),
     axis.text = element_text(size = 8, color = "gray30"),
@@ -592,7 +575,6 @@ theme_mse <- theme_minimal(base_size = 11) +
     plot.margin = margin(10, 15, 10, 10)
   )
 
-# Genera i plot
 plot_list <- list()
 for (j in 1:4) {
   subset_data <- plot_data[plot_data$Func_Name == labels_list[j], ]
@@ -607,49 +589,36 @@ for (j in 1:4) {
   plot_list[[j]] <- p
 }
 
-# Combina con patchwork
-combined <- (plot_list[[1]] | plot_list[[2]]) / 
+combined_mse <- (plot_list[[1]] | plot_list[[2]]) / 
   (plot_list[[3]] | plot_list[[4]]) +
   plot_annotation(
-    title = "Pointwise Mean Squared Error (MSE)",
-    theme = theme(
-      plot.title = element_text(hjust = 0.5, face = "bold", size = 14, 
-                                margin = margin(b = 15))
-    )
+    title = "Pointwise MSE (Smooth Backfitting)",
+    theme = theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 14, margin = margin(b = 15)))
   )
+print(combined_mse)
 
-print(combined)
-
-################################################################################
-
-# Preparazione dati
-labels_list <- c("X[1]*f[1](X[11])", "X[6]*f[2](X[13])", "X[8]*f[3](X[11])", 
-                 "X[5]*f[4](X[13])")
-y_labels <- c("Bias~(f[list(1,11)])", "Bias~(f[list(6,13)])", "Bias~(f[list(8,11)])", 
-              "Bias~(f[list(5,13)])")
-
+# Bias Plot ----
+y_labels_bias <- c("Bias~(f[list(2,1)])", "Bias~(f[list(6,3)])", "Bias~(f[list(8,1)])", 
+                   "Bias~(f[list(5,3)])")
 f_true_list <- list(f1.true, f2.true, f3.true, f4.true)
 
-plot_data <- data.frame()
+plot_data_bias <- data.frame()
 for (j in 1:4) {
   temp_df <- data.frame(
     x = x_grid,
-    bias = (apply(f.hat1[[j]], 1, mean) - f_true_list[[j]]),
+    bias = apply(f.hat1[[j]], 1, mean) - f_true_list[[j]],
     Func_Name = labels_list[j]
   )
-  plot_data <- rbind(plot_data, temp_df)
+  plot_data_bias <- rbind(plot_data_bias, temp_df)
 }
-plot_data$Function <- factor(plot_data$Func_Name, levels = labels_list)
+plot_data_bias$Function <- factor(plot_data_bias$Func_Name, levels = labels_list)
 
-# Colori
-line_col <- "#2E7D32"
-fill_col <- "#81C784"
+line_col_bias <- "#2E7D32"
+fill_col_bias <- "#81C784"
 
-# Theme personalizzato
 theme_bias <- theme_minimal(base_size = 11) +
   theme(
-    plot.title = element_text(hjust = 0.5, face = "italic", size = 11, 
-                              margin = margin(b = 10)),
+    plot.title = element_text(hjust = 0.5, face = "italic", size = 11, margin = margin(b = 10)),
     axis.title.y = element_text(size = 9, margin = margin(r = 5)),
     axis.title.x = element_blank(),
     axis.text = element_text(size = 8, color = "gray30"),
@@ -658,49 +627,38 @@ theme_bias <- theme_minimal(base_size = 11) +
     plot.margin = margin(10, 15, 10, 10)
   )
 
-# Genera i plot
-plot_list <- list()
+plot_list_bias <- list()
 for (j in 1:4) {
-  subset_data <- plot_data[plot_data$Func_Name == labels_list[j], ]
+  subset_data <- plot_data_bias[plot_data_bias$Func_Name == labels_list[j], ]
   
   p <- ggplot(subset_data, aes(x = x, y = bias)) +
-    geom_area(fill = fill_col, alpha = 0.3) +
-    geom_line(color = line_col, linewidth = 0.6) +
-    coord_cartesian(ylim = c(-0.5, 0.6)) +
-    labs(title = parse(text = labels_list[j]), y = parse(text = y_labels[j])) +
+    geom_area(fill = fill_col_bias, alpha = 0.3) +
+    geom_line(color = line_col_bias, linewidth = 0.6) +
+    coord_cartesian(ylim = c(-0.6, 0.6)) +
+    labs(title = parse(text = labels_list[j]), y = parse(text = y_labels_bias[j])) +
     theme_bias
   
-  plot_list[[j]] <- p
+  plot_list_bias[[j]] <- p
 }
 
-# Combina con patchwork
-combined <- (plot_list[[1]] | plot_list[[2]]) / 
-  (plot_list[[3]] | plot_list[[4]]) +
+combined_bias <- (plot_list_bias[[1]] | plot_list_bias[[2]]) / 
+  (plot_list_bias[[3]] | plot_list_bias[[4]]) +
   plot_annotation(
-    title = "Pointwise Bias",
-    theme = theme(
-      plot.title = element_text(hjust = 0.5, face = "bold", size = 14, 
-                                margin = margin(b = 15))
-    )
+    title = "Pointwise Bias (Smooth Backfitting)",
+    theme = theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 14, margin = margin(b = 15)))
   )
+print(combined_bias)
 
-print(combined)
 
-# Function plot ----
-library(ggplot2)
-library(patchwork)
-library(cowplot)
+# Function Plot ----
+f_true_list <- list(f1.true, f2.true, f3.true, f4.true)
+x_labels <- c("X[1]", "X[3]", "X[1]", "X[3]")
+y_labels_func <- c("X[2]*f[1](X[1])", "X[6]*f[2](X[3])", "X[8]*f[3](X[1])", "X[5]*f[4](X[3])")
 
-# Preparazione dati
-f_true_funcs <- list(f1, f2, f3, f4)
-x_labels <- c("X[11]", "X[13]", "X[11]", "X[13]")
-y_labels <- c("X[1]*f[1](X[11])", "X[6]*f[2](X[13])", "X[8]*f[3](X[11])", "X[5]*f[4](X[13])")
+true_col <- "#a6bbff"
+est_col <- "#c12068ff"
+ribbon_col <- "#eae0edff"
 
-# Colori
-true_col <- "#00695C"
-est_col <- "#AD1457"
-ribbon_col <- "#E0E0E0"
-# Theme personalizzato
 theme_func <- theme_minimal(base_size = 11) +
   theme(
     plot.title = element_blank(),
@@ -714,35 +672,39 @@ theme_func <- theme_minimal(base_size = 11) +
     legend.position = "none"
   )
 
-# Genera i plot
-plot_list <- list()
+x_rug <- valid_results[[nsim_valid]]$x_data
+
+plot_list_func <- list()
 for (j in 1:4) {
   
   plot_df <- data.frame(
     x = x_grid,
-    true_f = f_true_funcs[[j]](x_grid),
+    true_f = f_true_list[[j]],
     estimate = apply(f.hat1[[j]], 1, mean),
     lower = apply(f.hat1[[j]], 1, quantile, 0.025),
     upper = apply(f.hat1[[j]], 1, quantile, 0.975)
   )
   
+  rug_df <- data.frame(x_rug = x_rug[[j]])
+  
   p <- ggplot(plot_df, aes(x = x)) +
     geom_hline(yintercept = 0, color = "gray40", linewidth = 0.5) +
     geom_vline(xintercept = 0, color = "gray40", linewidth = 0.5) +
     geom_ribbon(aes(ymin = lower, ymax = upper), fill = ribbon_col, alpha = 0.7) +
-    geom_line(aes(y = true_f, color = "True function"), linewidth = 1) +
-    geom_line(aes(y = estimate, color = "Estimate"), linewidth = 0.8, linetype = "dashed") +
+    geom_line(aes(y = true_f, color = "True function"), linewidth = 0.6) +
+    geom_line(aes(y = estimate, color = "Estimate"), linewidth = 0.6, linetype = "dashed") +
+    geom_rug(data = rug_df, aes(x = x_rug), sides = "b", color = "black", alpha = 0.5, linewidth = 0.3) +
     scale_color_manual(values = c("True function" = true_col, "Estimate" = est_col)) +
-    coord_cartesian(ylim = c(-10, 5)) +
-    labs(x = parse(text = x_labels[j]), y = parse(text = y_labels[j])) +
+    coord_cartesian(ylim = c(-6, 6)) +
+    labs(x = parse(text = x_labels[j]), y = parse(text = y_labels_func[j])) +
     theme_func
   
-  plot_list[[j]] <- p
+  plot_list_func[[j]] <- p
 }
-# Legenda separata
+
 legend_plot <- ggplot(data.frame(x = 1, y = 1), aes(x, y)) +
-  geom_line(aes(color = "True function"), linewidth = 1) +
-  geom_line(aes(color = "Estimate"), linewidth = 0.8, linetype = "dashed") +
+  geom_line(aes(color = "True function"), linewidth = 0.6) +
+  geom_line(aes(color = "Estimate"), linewidth = 0.6, linetype = "dashed") +
   scale_color_manual(values = c("True function" = true_col, "Estimate" = est_col)) +
   theme_void() +
   theme(
@@ -751,37 +713,31 @@ legend_plot <- ggplot(data.frame(x = 1, y = 1), aes(x, y)) +
     legend.text = element_text(size = 10),
     legend.key.width = unit(1.5, "cm")
   ) +
-  guides(color = guide_legend(override.aes = list(linewidth = c(0.8, 0.8), linetype = c("solid", "dashed"))))
+  guides(color = guide_legend(override.aes = list(linewidth = 1.2, linetype = c("solid", "dashed"))))
 
-# Estrai solo la legenda
 legend_grob <- cowplot::get_legend(legend_plot)
 
-# Combina con patchwork
-combined <- (plot_list[[1]] | plot_list[[2]]) / 
-  (plot_list[[3]] | plot_list[[4]]) +
+combined_func <- (plot_list_func[[1]] | plot_list_func[[2]]) / 
+  (plot_list_func[[3]] | plot_list_func[[4]]) +
   plot_annotation(
-    title = "True vs Estimated Functions",
-    theme = theme(
-      plot.title = element_text(hjust = 0.5, face = "bold", size = 14, 
-                                margin = margin(b = 5))
-    )
+    title = "True vs Estimated Functions (Smooth Backfitting)",
+    theme = theme(plot.title = element_text(hjust = 0.5, face = "bold", size = 14, margin = margin(b = 5)))
   )
 
-# Layout finale con legenda
-wrap_elements(legend_grob) / combined + plot_layout(heights = c(0.08, 1))
-
+wrap_elements(legend_grob) / combined_func + plot_layout(heights = c(0.08, 1))
 
 # Save results to JSON ----
 library(jsonlite)
 results_json <- list(
   sample_size = n,
-  replications = nsim,
-  f1_X11X1 = list(ibs = unname(ibs[1]), imse = unname(imse[1])),
-  f2_X13X6 = list(ibs = unname(ibs[2]), imse = unname(imse[2])),
-  f3_X11X8 = list(ibs = unname(ibs[3]), imse = unname(imse[3])),
-  f4_X13X5 = list(ibs = unname(ibs[4]), imse = unname(imse[4]))
+  replications = nsim_valid,
+  method = "Smooth Backfitting (kernel)",
+  f1_X2X1 = list(ibs = unname(ibs[1]), imse = unname(imse[1])),
+  f2_X6X3 = list(ibs = unname(ibs[2]), imse = unname(imse[2])),
+  f3_X8X1 = list(ibs = unname(ibs[3]), imse = unname(imse[3])),
+  f4_X5X3 = list(ibs = unname(ibs[4]), imse = unname(imse[4]))
 )
-write_json(results_json, "results.json", pretty = TRUE, auto_unbox = TRUE)
+write_json(results_json, "results_sb.json", pretty = TRUE, auto_unbox = TRUE)
 
 
 # aggiungere variabili che non ci sono. Aggiungo una variabile che sta nel grafo ma non nel modello vero

@@ -19,7 +19,7 @@ where all coefficient functions f₁(z), f₂(z), ..., fₐ(z) are functions of 
 - LLP (Local Polynomial): VCM with local cubic fit
 - KLASSO: Group lasso penalty for nonparametric regression
 - MSE bandwidth selector for LLR
-- Two-step estimation with different bandwidths for different functions
+- two-step estimation with different bandwidths for different functions
 
 ### Model 1.2
 **Each coefficient function can have its own smoothing variable**
