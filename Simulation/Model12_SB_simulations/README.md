@@ -1,222 +1,218 @@
-# Model 1.2 Smoothed Backfitting Simulations
+# Model 1.2 Varying-Coefficient Simulations
 
 ## Overview
 
-Monte Carlo study evaluating wsbackfit performance under three different dependence structures using Gaussian Graphical Models.
+Studio di simulazione Monte Carlo per confrontare due metodi di stima per modelli a coefficienti variabili sotto diverse strutture di dipendenza 
 
-### Common Fixed Elements
+### Metodi Comparati
+
+1. **Smoothed Backfitting (wsbackfit)**: Algoritmo iterativo kernel-based con selezione automatica della bandwidth
+2. **P-splines (GAM/mgcv)**: Penalized splines con smoothing parameter selection via REML
+
+### Parametri Comuni delle Simulazioni
 
 - **Monte Carlo replications**: nsim = 100
-- **Estimation method**: wsbackfit with automatic bandwidth selection (h = -1)
+- **Sample size**: n = 500
 - **Evaluation grid**: x_grid = seq(-3, 3, length = n)
-- **Sample sizes**: n = 500, n = 1000
-- **Data generation**: Multivariate normal distributions with graphical model structure (using `huge.generator`)
+- **Data generation**: Multivariate normal distributions 
+- **Parallelization**: `doParallel` con tutti i core disponibili - 1
 
-## Three Simulation Structures
+## Strutture di Dipendenza Analizzate
 
-### 1. Independence Structure
+### 1. Struttura di Indipendenza
 
-**Purpose**: Evaluate performance when coefficient variables (Xᵢ) are generated from a Gaussian Graphical Model, but smoothing variables remain independent across functions.
+**Obiettivo**: Valutare le performance quando le variabili di smoothing (Zᵢ) hanno una dipendenza con le altre variabili del modello rispetto a quando sono indipendenti.
 
-**Script**: `SB_simulation.R`
+**Script**:
+- Smoothed Backfitting: [Smooth_BF_VC.R](Simulation _script/Smooth_BF_VC.R)
+- P-splines: [Spline_VC.R](Simulation _script/Spline_VC.R)
 
-**Model**: Y = X₁f₁(Z₁) + X₆f₂(Z₂) + X₈f₃(Z₁) + X₅f₄(Z₂) + ε
+**Modello**:
+```
+Y = X₂·f₁(Z₁) + X₆·f₂(Z₂) + X₈·f₃(Z₁) + X₅·f₄(Z₂) + ε
+```
 
-- **Graphical Model**: p = 15 predictors, graph = "random", prob = 0.23
-- **True coefficient functions**:
+**Data Generating Process**:
+- **Graphical Model**: p = 9 variabili, graph = "random", prob = 0.4
+- **Funzioni coefficiente**:
   - f₁(z) = z
-  - f₂(z) = 2 tanh(z)
-  - f₃(z) = 2 exp(-0.5z²)
-  - f₄(z) = 2.5 sin(2z) exp(-0.2z²)
+  - f₂(z) = 2·tanh(z)
+  - f₃(z) = 2·exp(-0.5z²)
+  - f₄(z) = 2.5·sin(2z)·exp(-0.2z²)
 
-**Folder structure**:
+**Note**: In questo setup, Z₁ e Z₂ (variabili di smoothing) sono indipendenti rispetto alle varibaili attive. Le variabili attive che non entrano nei coefficienti (X₂, X₆, X₈, X₅) sono prese dallo stesso grafo.
+
+**Output folders**:
 ```
-Indipendence_structure/
-├── uniform_Z/
-│   ├── n500/      (Z ~ Uniform(-3, 3))
-│   └── n1000/
-└── normal_Z/
-    ├── n500/      (Z ~ N(0, 1))
-    └── n1000/
+Smooth_BF/500_independence/
+P-spline/500_idependence/
 ```
 
-### 2. Dependence Structure (Interaction)
+### 2. Struttura di Dipendenza
 
-**Purpose**: Evaluate performance when both coefficient variables and smoothing variables share dependencies, with additional non-varying smooth terms.
+**Obiettivo**: Valutare le performance quando sia le variabili coefficiente che le variabili di smoothing condividono la struttura di dipendenza del GGM.
 
-**Script**: `SB_simulation_interact.R`
+**Script**:
+- Smoothed Backfitting: [Smooth_BF_VC.R](Simulation _script/Smooth_BF_VC.R)
+- P-splines: [Spline_VC.R](Simulation _script/Spline_VC.R)
 
-**Model**: Y = X₁f₁(X₂) + X₆f₂(X₃) + X₁₀f₃(X₈) + X₅f₄(X₃) + f₅(X₂) + f₃(X₇) + ε
-
-- **Graphical Model**: p = 10 predictors, graph = "random", prob = 0.4
-- **True coefficient functions**:
-  - f₁(z) = z
-  - f₂(z) = 2 tanh(z)
-  - f₃(z) = 2 exp(-0.5z²)
-  - f₄(z) = 0.1z³
-  - f₅(z) = 2.5 sin(2z) exp(-0.2z²)
-- **Note**: Includes 6 functions total (4 varying-coefficient + 2 smooth terms)
-
-**Folder structure**:
+**Modello**:
 ```
-Dependece_structure/
-├── n500/
-└── n1000/
+Y = X₂·f₁(X₁) + X₆·f₂(X₃) + X₈·f₃(X₁) + X₅·f₄(X₃) + ε
 ```
 
-### 3. Graph Structure
+**Data Generating Process**:
+- **Graphical Model**: p = 9 variabili, graph = "random", prob = 0.4 (maggiore connettività)
+- **Funzioni coefficiente**: Identiche alla struttura di indipendenza
+- **Caratteristica distintiva**: Maggiore probabilità di connessioni nel grafo 
 
-**Purpose**: Evaluate performance under a specific graphical model configuration with both dependent and independent smoothing variables.
-
-**Script**: `SB_Graph_simulation.R`
-
-**Model**: Y = X₁f₁(Z₁) + X₆f₂(Z₂) + X₈f₃(Z₃) + X₅f₄(Z₄) + ε
-
-- **Graphical Model**: p = 15 predictors, graph = "random", prob = 0.23
-- **True coefficient functions**: Same as Independence Structure
-
-**Folder structure**:
+**Output folders**:
 ```
-Graph_structure/
-├── n500/
-└── 500d/     (alternative configuration)
+Smooth_BF/500_dependence/
+P-spline/500_dependence/
 ```
 
-## Folder Structure
+## Struttura delle Cartelle
 
 ```
 Model12_SB_simulations/
-├── README.md                              (this file)
+├── README.md                           (questo file)
 ├── Simulation _script/
-│   ├── SB_simulation.R                    (Independence structure)
-│   ├── SB_simulation_interact.R           (Dependence structure with interactions)
-│   └── SB_Graph_simulation.R              (Graph structure)
-├── Indipendence_structure/
-│   ├── uniform_Z/
-│   │   ├── n500/
-│   │   │   ├── Pointwise MSE n=500.png
-│   │   │   ├── Pointwise bias n =500.png
-│   │   │   └── results.json
-│   │   └── n1000/
-│   │       ├── Poinwise MSE n=1000.png
-│   │       ├── Poinwise Bias n=1000.png
-│   │       └── results.json
-│   └── normal_Z/
-│       ├── n500/                          (empty - to be generated)
-│       └── n1000/
-│           ├── Poinwise MSE normal n=1000.png
-│           ├── Pointwise bias normal n=1000.png
-│           ├── Norm_est_func_n=1000.png
-│           └── results.json
-├── Dependece_structure/
-│   ├── n500/
-│   │   ├── EF_interaction_n=500.png
-│   │   ├── MSE interaction n=500.png
-│   │   ├── Bias interaction n=500.png
+│   ├── Smooth_BF_VC.R                 (Smoothed Backfitting)
+│   ├── Spline_VC.R                    (P-splines con GAM)
+│   └── Permutation_test.R             (Test di permutazione)
+├── Smooth_BF/                         (Risultati Smoothed Backfitting)
+│   ├── DPG_graph.png                  (Visualizzazione GGM)
+│   ├── results.json                   (Risultati vecchi - deprecato)
+│   ├── 500_independence/
+│   │   ├── Pointwise_MSE_SB.png
+│   │   ├── Pointwise_bias_SB.png
+│   │   ├── VC_estimate_SB.png
 │   │   └── results.json
-│   └── n1000/
-│       ├── MSE_interaction_n1000.png
-│       ├── Bias_interaction_n1000.png
-│       ├── true_f_interaction_n1000.png
-│       └── results.json
-└── Graph_structure/
-    ├── n500/
-    │   ├── EF_500.png
-    │   ├── MSE_500.png
-    │   ├── bias_500.png
-    │   └── results.json
-    └── 500d/
-        ├── Estimate_function_500d.png
-        ├── MSE_500d.png
-        ├── Bias_500d.png
-        └── results.json
+│   └── 500_dependence/
+│       ├── Pointwise_MSE_SB_d.png
+│       ├── Pointwise_bias_SB_d.png
+│       ├── VC_estimate_SB_d.png
+│       └── results_sb.json
+└── P-spline/                          (Risultati P-splines)
+    ├── DPG_graph.png                  (Visualizzazione GGM)
+    ├── 500_idependence/               (nota: typo nel nome folder)
+    │   ├── Pointwise_MSE_P-spline.png
+    │   ├── Pointwise_bias_P-spline.png
+    │   ├── VC estimate P-spline.png
+    │   └── results_gam.json
+    └── 500_dependence/
+        ├── Pointwise_MSE_P-spline_d.png
+        ├── Pointwise_bias_P-spline_d.png
+        ├── VC_estimate_P-spline_d.png
+        └── results_gam.json
 ```
 
-## Output Files
+## Output Generati
 
-### Independence Structure
-Each scenario folder contains:
-- **Pointwise MSE plot** - MSE curves for all 4 functions (2×2 panel plot)
-- **Pointwise Bias plot** - Bias curves for all 4 functions (2×2 panel plot)
-- **Estimated Functions plot** - True vs estimated functions comparison
-- **results.json** - Numerical summary with IBS and IMSE for each function
+Ogni configurazione (metodo × struttura di dipendenza) produce:
 
-### Dependence Structure
-Each sample size folder contains:
-- **MSE interaction plot** - MSE curves for all 6 functions (2×3 panel plot)
-- **Bias interaction plot** - Bias curves for all 6 functions (2×3 panel plot)
-- **EF/True function plot** - True vs estimated functions comparison
-- **results.json** - Numerical summary with IBS and IMSE for all 6 functions
+### 1. Pointwise MSE Plot
+File: `Pointwise_MSE_*.png`
 
-### Graph Structure
-Each folder contains:
-- **MSE plot** - MSE curves for all 4 functions
-- **Bias plot** - Bias curves for all 4 functions
-- **Estimated Functions plot** - True vs estimated functions
-- **results.json** - Numerical summary with IBS and IMSE for each function
+Pannelli 2×2 che mostrano il Mean Squared Error punto per punto per ciascuna delle 4 funzioni coefficiente lungo la griglia di valutazione [-3, 3].
 
-## Metrics
+### 2. Pointwise Bias Plot
+File: `Pointwise_bias_*.png`
 
-- **IBS (Integrated Squared Bias)**: Mean of squared bias across evaluation grid
-  - Integral approximation formula: `mean((mean(f.hat) - f.true)²)`
+Pannelli 2×2 che mostrano il bias punto per punto (media delle stime - funzione vera) per ciascuna funzione.
 
-- **IMSE (Integrated Mean Squared Error)**: Integrated pointwise MSE
-  - Integral approximation formula: `6 × mean(pointwise_MSE)`
-  - Factor 6 represents the range width: max(x_grid) - min(x_grid) = 3 - (-3) = 6
+### 3. Estimated Functions Plot
+File: `VC_estimate_*.png` 
 
-## Common Script Features
+Pannelli 2×2 che sovrappongono:
+- Funzioni medie stimate dalle replicazione MC 
 
-All simulation scripts:
-- Run parallel Monte Carlo with `nsim = 100` replications using all available cores (`doParallel`)
-- Estimate coefficient functions using `wsbackfit` with automatic bandwidth selection (h = -1)
-- Compute IBS and IMSE metrics for each function
-- Generate visualization plots using `ggplot2` and `patchwork`
-- Save numerical results to JSON format
+### 4. DGP Graph
+File: `DPG_graph.png` grafo iniziale
 
-## JSON Output Format
+### 5. Results JSON
+File: `results.json`, `results_sb.json`, `results_gam.json`
 
-### Independence and Graph Structure
+## Metriche di Performance
+
+### IBS (Integrated Squared Bias)
+
+**Formula**:
+```r
+IBS = mean((mean(f.hat) - f.true)²)
+```
+
+### IMSE (Integrated Mean Squared Error)
+
+**Formula**:
+```r
+IMSE = 6 × mean(pointwise_MSE)
+```
+
+### Esempio JSON Output
+
+#### Smoothed Backfitting - Indipendenza
 ```json
 {
   "sample_size": 500,
   "replications": 100,
-  "f1_XiXj": {
-    "ibs": 0.123456,
-    "imse": 0.567890
+  "f1_X1Z1": {
+    "ibs": 0.001,
+    "imse": 3.476
   },
-  "f2_XkXl": {
-    "ibs": 0.234567,
-    "imse": 0.678901
+  "f2_X6Z2": {
+    "ibs": 0.006,
+    "imse": 1.125
   },
-  "f3_XmXn": {
-    "ibs": 0.345678,
-    "imse": 0.789012
+  "f3_X8Z1": {
+    "ibs": 0.015,
+    "imse": 5.637
   },
-  "f4_XpXq": {
-    "ibs": 0.456789,
-    "imse": 0.890123
+  "f4_X5Z2": {
+    "ibs": 0.117,
+    "imse": 2.458
   }
 }
 ```
 
-### Dependence Structure (6 functions)
+#### P-splines - Dipendenza
 ```json
 {
   "sample_size": 500,
   "replications": 100,
-  "f1_X1X2": { "ibs": ..., "imse": ... },
-  "f2_X6X3": { "ibs": ..., "imse": ... },
-  "f3_X10X8": { "ibs": ..., "imse": ... },
-  "f4_X5X3": { "ibs": ..., "imse": ... },
-  "f5_X2": { "ibs": ..., "imse": ... },
-  "f3_X7": { "ibs": ..., "imse": ... }
+  "method": "GAM P-splines (REML)",
+  "f1_X2X1": {
+    "ibs": 0.002,
+    "imse": 0.808
+  },
+  "f2_X6X3": {
+    "ibs": 0.010,
+    "imse": 1.152
+  },
+  "f3_X8X1": {
+    "ibs": 0.011,
+    "imse": 0.953
+  },
+  "f4_X5X3": {
+    "ibs": 0.145,
+    "imse": 1.756
+  }
 }
 ```
 
-## Date Created
+## Test di Permutazione
 
-2025-12-01
+**Script**: [Permutation_test.R](Simulation _script/Permutation_test.R)
 
-## Last Updated
+Implementa due approcci per testare la rilevanza delle funzioni coefficiente usando Smoothed Backfitting.
 
-2025-12-05
+### Test 1: Permutazione della Variabile Coefficiente
+
+**H₀**: f₂(z₂) = 0 (la funzione oscilla attorno allo zero senza effetto sistematico)
+
+### Test 2: Permutazione della Variabile di Smoothing
+
+**H₀**: f(z₂) = costante (la funzione non varia con z₂)
+
+

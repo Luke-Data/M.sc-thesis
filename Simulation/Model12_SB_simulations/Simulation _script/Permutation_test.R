@@ -65,7 +65,7 @@ for (i in 1:nsim){
 #p-value
 print(sum(mse.b < mse.l)/length(mse.b)) # reject H0
 
-plot(x_grid, x, type='l', ylim=c(-1, 1), 
+plot(x_grid, apply(f2.sim,1,mean), type='l', ylim=c(-1, 1), 
      main="", ylab="f2(z2)")
 abline(h=0, lwd=2, lty=2)
 
