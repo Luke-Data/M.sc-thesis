@@ -733,7 +733,3 @@ results_json <- list(
 write_json(results_json, "results_sb.json", pretty = TRUE, auto_unbox = TRUE)
 
 
-# aggiungere variabili che non ci sono. Aggiungo una variabile che sta nel grafo ma non nel modello vero
-# Permutation test 
-
-
