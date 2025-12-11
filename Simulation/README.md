@@ -35,32 +35,24 @@ Simulation/
 
 **Script**: [Smooth_BF_VC.R](Model12_SB_simulations/Simulation _script/Smooth_BF_VC.R)
 
-**Descrizione**: Algoritmo iterativo per la stima di modelli additivi generalizzati con coefficienti variabili utilizzando kernel smoothing.
-
-**Caratteristiche**:
-- Selezione automatica della bandwidth (h = -1)
-- Monte Carlo con 100 replicazioni
-- Parallelizzazione con `doParallel`
-- Valutazione su griglia: x_grid = seq(-3, 3, length = n)
-
 **Modelli Valutati**:
 
 #### Struttura di Indipendenza
-- **Modello**: Y = X₂f₁(X₁) + X₆f₂(X₃) + X₈f₃(X₁) + X₅f₄(X₃) + ε
-- **Grafo**: p = 9 variabili, graph = "random", prob = 0.23
+- **Modello**: Y = X₂f₁(Z₁) + X₆f₂(Z₂) + X₈f₃(Z₁) + X₅f₄(Z₂) + ε
+- **Grafo**: p = 9 variabili, graph = "random", prob = 0.4
 - **Sample size**: n = 500
 
 #### Struttura di Dipendenza
 - **Modello**: Y = X₂f₁(X₁) + X₆f₂(X₃) + X₈f₃(X₁) + X₅f₄(X₃) + ε
 - **Grafo**: p = 9 variabili, graph = "random", prob = 0.4
 - **Sample size**: n = 500
-- **Caratteristica**: Tutte le variabili (coefficienti e smoothing) provengono dal modello grafico gaussiano
+- **Caratteristica**: Tutte le variabili (coefficienti e smoothing) provengono dal modello grafico 
 
 ### 2. P-splines con GAM (mgcv)
 
 **Script**: [Spline_VC.R](Model12_SB_simulations/Simulation _script/Spline_VC.R)
 
-**Descrizione**: Stima dei modelli a coefficienti variabili utilizzando penalized splines attraverso il package `mgcv`.
+**Descrizione**: Stima dei modelli a coefficienti variabili utilizzando penalized splines.
 
 **Caratteristiche**:
 - Basis: P-splines (bs = 'ps')
@@ -68,7 +60,7 @@ Simulation/
 - Monte Carlo con 100 replicazioni
 - Stessa struttura di dipendenza del Smoothed Backfitting per confrontabilità
 
-**Modelli Valutati**: Identici a quelli del Smoothed Backfitting per permettere confronto diretto delle performance.
+**Modelli Valutati**: Identici a quelli del Smoothed Backfitting.
 
 ### 3. Kernel LASSO (KLASSO)
 
