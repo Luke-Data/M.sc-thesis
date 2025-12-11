@@ -1,0 +1,21 @@
+{
+  "sample_size": 500,
+  "replications": 100,
+  "method": "Smooth Backfitting (kernel)",
+  "f1_X2X1": {
+    "ibs": 0.002,
+    "imse": 0.808
+  },
+  "f2_X6X3": {
+    "ibs": 0.01,
+    "imse": 1.152
+  },
+  "f3_X8X1": {
+    "ibs": 0.011,
+    "imse": 0.953
+  },
+  "f4_X5X3": {
+    "ibs": 0.145,
+    "imse": 1.756
+  }
+}
